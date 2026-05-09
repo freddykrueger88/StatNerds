@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 
 const THEMES = [
-  { name: 'Standard', primary: '#4ade80', secondary: '#166534' },
+  { name: 'Werder Bremen', primary: '#1D9253', secondary: '#FFFFFF' },  // ⭐ Standard!
   { name: 'FC Bayern', primary: '#ED1C24', secondary: '#FFFFFF' },
   { name: 'BVB Dortmund', primary: '#FCEA10', secondary: '#000000' },
   { name: 'Bayer Leverkusen', primary: '#E32221', secondary: '#000000' },
   { name: 'RB Leipzig', primary: '#DD0741', secondary: '#001E62' },
   { name: 'Schalke 04', primary: '#004D9D', secondary: '#FFFFFF' },
   { name: 'HSV', primary: '#0B1F69', secondary: '#FFFFFF' },
-  { name: 'Werder Bremen', primary: '#1D9253', secondary: '#FFFFFF' },
+  { name: 'Borussia Mönchengladbach', primary: '#00A550', secondary: '#000000' },
+  { name: 'Eintracht Frankfurt', primary: '#E1000F', secondary: '#000000' },
+  { name: 'VfB Stuttgart', primary: '#E32221', secondary: '#FFFFFF' },
   { name: 'Nacht (Dark)', primary: '#6366f1', secondary: '#1e1b4b' },
 ];
 
@@ -50,19 +52,21 @@ export default function Settings({ theme, setTheme }) {
 
       {/* Theme */}
       <div style={block}>
-        <h3 style={{ margin: '0 0 1rem 0' }}>🎨 Theme / Vereinsfarben</h3>
-        <span style={label}>Aktiv: <strong>{theme.name}</strong></span>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem' }}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>🎨 Theme / Vereinsfarben</h3>
+        <span style={label}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong> {theme.name === 'Werder Bremen' ? '⭐' : ''}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.5rem' }}>
           {THEMES.map(t => (
             <button key={t.name} onClick={() => applyTheme(t)} style={{
               background: theme.name === t.name ? t.primary : '#222',
               color: theme.name === t.name ? '#000' : '#aaa',
               border: `2px solid ${t.primary}`,
               borderRadius: '8px', padding: '0.5rem', cursor: 'pointer',
-              fontWeight: theme.name === t.name ? 'bold' : 'normal', fontSize: '0.82rem'
+              fontWeight: theme.name === t.name ? 'bold' : 'normal',
+              fontSize: '0.82rem', textAlign: 'left'
             }}>
-              <div style={{ width: '16px', height: '16px', background: t.primary, borderRadius: '50%', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle' }} />
+              <div style={{ width: '14px', height: '14px', background: t.primary, borderRadius: '50%', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle', border: '1px solid #333' }} />
               {t.name}
+              {t.name === 'Werder Bremen' && ' ⭐'}
             </button>
           ))}
         </div>
@@ -71,7 +75,7 @@ export default function Settings({ theme, setTheme }) {
       {/* API Key */}
       <div style={block}>
         <h3 style={{ margin: '0 0 1rem 0' }}>🔑 API-Football Key</h3>
-        <span style={label}>Kostenlos unter api-sports.io registrieren</span>
+        <span style={label}>Kostenlos unter api-sports.io registrieren – für Live-xG & detaillierte Stats</span>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <input
             value={apiKey}
