@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 function PredictionBar({ home, draw, away, team1, team2 }) {
   return (
@@ -18,10 +18,10 @@ function PredictionBar({ home, draw, away, team1, team2 }) {
 function GoalList({ goals }) {
   if (!goals || goals.length === 0) return null;
   return (
-    <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#aaa' }}>
+    <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#aaa', lineHeight: '1.7' }}>
       {goals.map((g, i) => (
         <span key={i} style={{ marginRight: '1rem' }}>
-          ⚽ {g.goalGetterName} {g.matchMinute}' ({g.scoreTeam1}:{g.scoreTeam2}){g.isPenalty ? ' [P]' : ''}{g.isOwnGoal ? ' [ET]' : ''}
+          ⚽ {g.goalGetterName} {g.matchMinute}'{g.isPenalty ? ' [P]' : ''}{g.isOwnGoal ? ' [ET]' : ''} ({g.scoreTeam1}:{g.scoreTeam2})
         </span>
       ))}
     </div>
@@ -48,42 +48,34 @@ function GameCard({ game, hero, theme }) {
   return (
     <div style={{
       background: hero ? 'linear-gradient(135deg,#1a1a2e,#16213e)' : '#1a1a1a',
-      borderRadius: '12px', padding: hero ? '2rem' : '1rem',
+      borderRadius: '12px', padding: hero ? '1.5rem' : '0.9rem',
       marginBottom: '0.75rem',
-      borderLeft: `4px solid ${isLive ? '#f87171' : isFinished ? '#555' : theme.primary}`
+      borderLeft: `4px solid ${isLive ? '#f87171' : isFinished ? '#333' : theme.primary}`
     }}>
-      {/* Teams + Score */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {game.team1?.teamIconUrl && <img src={game.team1.teamIconUrl} alt='' style={{ width: hero ? '36px' : '22px', height: hero ? '36px' : '22px', objectFit: 'contain' }} />}
-          <span style={{ fontSize: hero ? '1.4rem' : '1rem', fontWeight: 'bold' }}>{t1}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1 }}>
+          {game.team1?.teamIconUrl && <img src={game.team1.teamIconUrl} alt='' style={{ width: hero ? '32px' : '20px', height: hero ? '32px' : '20px', objectFit: 'contain', flexShrink: 0 }} />}
+          <span style={{ fontSize: hero ? '1.3rem' : '0.95rem', fontWeight: 'bold' }}>{t1}</span>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: hero ? '2.2rem' : '1.3rem', color: '#facc15', fontWeight: 'bold' }}>
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
+          <div style={{ fontSize: hero ? '2rem' : '1.2rem', color: '#facc15', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
             {final ? `${final.pointsTeam1} : ${final.pointsTeam2}` : isLive ? '🔴 LIVE' : 'vs'}
           </div>
-          {half && <div style={{ fontSize: '0.72rem', color: '#666' }}>HZ: {half.pointsTeam1}:{half.pointsTeam2}</div>}
+          {half && <div style={{ fontSize: '0.68rem', color: '#555' }}>HZ {half.pointsTeam1}:{half.pointsTeam2}</div>}
+          {isLive && <div style={{ fontSize: '0.68rem', color: '#f87171', animation: 'pulse 1s infinite' }}>● LIVE</div>}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: 'row-reverse' }}>
-          {game.team2?.teamIconUrl && <img src={game.team2.teamIconUrl} alt='' style={{ width: hero ? '36px' : '22px', height: hero ? '36px' : '22px', objectFit: 'contain' }} />}
-          <span style={{ fontSize: hero ? '1.4rem' : '1rem', fontWeight: 'bold' }}>{t2}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, justifyContent: 'flex-end' }}>
+          <span style={{ fontSize: hero ? '1.3rem' : '0.95rem', fontWeight: 'bold', textAlign: 'right' }}>{t2}</span>
+          {game.team2?.teamIconUrl && <img src={game.team2.teamIconUrl} alt='' style={{ width: hero ? '32px' : '20px', height: hero ? '32px' : '20px', objectFit: 'contain', flexShrink: 0 }} />}
         </div>
       </div>
-
-      {/* Meta */}
-      <div style={{ textAlign: 'center', color: '#666', fontSize: '0.78rem', marginTop: '0.3rem' }}>
-        {new Date(game.matchDateTime).toLocaleString('de-DE')} · {game.group?.groupName}
-        {isFinished && <span style={{ marginLeft: '0.5rem', color: '#555' }}>✓ Abgeschlossen</span>}
+      <div style={{ textAlign: 'center', color: '#555', fontSize: '0.74rem', marginTop: '0.3rem' }}>
+        {new Date(game.matchDateTime).toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · {game.group?.groupName}
       </div>
-
-      {/* Tore */}
       {hero && <GoalList goals={game.goals} />}
-
-      {/* Prediction */}
-      {pred && pred.home_win !== undefined && (
+      {pred?.home_win !== undefined && (
         <PredictionBar home={pred.home_win} draw={pred.draw} away={pred.away_win} team1={t1} team2={t2} />
       )}
-      {pred && <div style={{ fontSize: '0.68rem', color: '#444', marginTop: '2px' }}>Basis: {pred.based_on}</div>}
     </div>
   );
 }
@@ -91,33 +83,47 @@ function GameCard({ game, hero, theme }) {
 export default function Games({ theme }) {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [heroOnly, setHeroOnly] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [liveCount, setLiveCount] = useState(0);
 
-  useEffect(() => {
+  const fetchGames = useCallback(() => {
     fetch('/api/games/bl1/current')
       .then(r => r.json())
-      .then(d => { setGames(Array.isArray(d) ? d : []); setLoading(false); })
+      .then(d => {
+        const arr = Array.isArray(d) ? d : [];
+        setGames(arr);
+        setLastUpdate(new Date());
+        setLiveCount(arr.filter(g => !g.matchIsFinished && new Date(g.matchDateTimeUTC) < new Date()).length);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchGames();
+    // Auto-refresh alle 60s
+    const interval = setInterval(fetchGames, 60000);
+    return () => clearInterval(interval);
+  }, [fetchGames]);
 
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '3rem' }}>⏳ Lade Spiele...</p>;
   if (!games.length) return <p style={{ color: '#666', textAlign: 'center' }}>Keine Spiele gefunden.</p>;
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0, color: theme.primary }}>33. Spieltag – Bundesliga 2025/26</h2>
-        <button onClick={() => setHeroOnly(!heroOnly)} style={{
-          background: '#222', color: '#aaa', border: '1px solid #333',
-          borderRadius: '6px', padding: '0.3rem 0.7rem', cursor: 'pointer', fontSize: '0.8rem'
-        }}>{heroOnly ? '☰ Alle Spiele' : '⬜ Nur Highlight'}</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h2 style={{ margin: 0, color: theme.primary, fontSize: '1.1rem' }}>
+          {games[0]?.group?.groupName} – Bundesliga 25/26
+        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.75rem', color: '#555' }}>
+          {liveCount > 0 && <span style={{ color: '#f87171', fontWeight: 'bold' }}>🔴 {liveCount} LIVE</span>}
+          {lastUpdate && <span>⟳ {lastUpdate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>}
+          <button onClick={fetchGames} style={{ background: '#222', color: '#888', border: '1px solid #333', borderRadius: '5px', padding: '0.2rem 0.6rem', cursor: 'pointer', fontSize: '0.75rem' }}>Aktualisieren</button>
+        </div>
       </div>
 
-      {/* Hero – erstes Spiel groß */}
       <GameCard game={games[0]} hero={true} theme={theme} />
-
-      {/* Rest */}
-      {!heroOnly && games.slice(1).map((g, i) => <GameCard key={i} game={g} hero={false} theme={theme} />)}
+      {games.slice(1).map((g, i) => <GameCard key={i} game={g} hero={false} theme={theme} />)}
     </div>
   );
 }
