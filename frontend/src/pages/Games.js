@@ -16,9 +16,9 @@ function PredictionBar({ home, draw, away, team1, team2 }) {
 }
 
 function GoalList({ goals }) {
-  if (!goals || goals.length === 0) return null;
+  if (!goals?.length) return null;
   return (
-    <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#aaa', lineHeight: '1.7' }}>
+    <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#aaa', lineHeight: '1.8' }}>
       {goals.map((g, i) => (
         <span key={i} style={{ marginRight: '1rem' }}>
           ⚽ {g.goalGetterName} {g.matchMinute}'{g.isPenalty ? ' [P]' : ''}{g.isOwnGoal ? ' [ET]' : ''} ({g.scoreTeam1}:{g.scoreTeam2})
@@ -36,13 +36,11 @@ function GameCard({ game, hero, theme }) {
   const final = results.find(r => r.resultTypeID === 2) || results[0];
   const half = results.find(r => r.resultTypeID === 1);
   const isLive = !game.matchIsFinished && new Date(game.matchDateTimeUTC) < new Date();
-  const isFinished = game.matchIsFinished;
 
   useEffect(() => {
-    if (t1 && t2) {
+    if (t1 && t2)
       fetch(`/api/prediction?team1=${encodeURIComponent(t1)}&team2=${encodeURIComponent(t2)}`)
-        .then(r => r.json()).then(d => setPred(d)).catch(() => {});
-    }
+        .then(r => r.json()).then(setPred).catch(() => {});
   }, [t1, t2]);
 
   return (
@@ -50,7 +48,7 @@ function GameCard({ game, hero, theme }) {
       background: hero ? 'linear-gradient(135deg,#1a1a2e,#16213e)' : '#1a1a1a',
       borderRadius: '12px', padding: hero ? '1.5rem' : '0.9rem',
       marginBottom: '0.75rem',
-      borderLeft: `4px solid ${isLive ? '#f87171' : isFinished ? '#333' : theme.primary}`
+      borderLeft: `4px solid ${isLive ? '#f87171' : game.matchIsFinished ? '#333' : theme.primary}`
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1 }}>
@@ -58,11 +56,11 @@ function GameCard({ game, hero, theme }) {
           <span style={{ fontSize: hero ? '1.3rem' : '0.95rem', fontWeight: 'bold' }}>{t1}</span>
         </div>
         <div style={{ textAlign: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: hero ? '2rem' : '1.2rem', color: '#facc15', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-            {final ? `${final.pointsTeam1} : ${final.pointsTeam2}` : isLive ? '🔴 LIVE' : 'vs'}
+          <div style={{ fontSize: hero ? '2rem' : '1.2rem', color: '#facc15', fontWeight: 'bold' }}>
+            {final ? `${final.pointsTeam1} : ${final.pointsTeam2}` : isLive ? '🔴' : 'vs'}
           </div>
           {half && <div style={{ fontSize: '0.68rem', color: '#555' }}>HZ {half.pointsTeam1}:{half.pointsTeam2}</div>}
-          {isLive && <div style={{ fontSize: '0.68rem', color: '#f87171', animation: 'pulse 1s infinite' }}>● LIVE</div>}
+          {isLive && <div style={{ fontSize: '0.68rem', color: '#f87171' }}>● LIVE</div>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, justifyContent: 'flex-end' }}>
           <span style={{ fontSize: hero ? '1.3rem' : '0.95rem', fontWeight: 'bold', textAlign: 'right' }}>{t2}</span>
@@ -84,41 +82,61 @@ export default function Games({ theme }) {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [liveCount, setLiveCount] = useState(0);
+  const [matchday, setMatchday] = useState(null); // null = aktuell
+  const [matchdays, setMatchdays] = useState([]);
 
-  const fetchGames = useCallback(() => {
-    fetch('/api/games/bl1/current')
+  // Spieltagsliste laden
+  useEffect(() => {
+    fetch('/api/games/bl1/matchdays')
       .then(r => r.json())
-      .then(d => {
-        const arr = Array.isArray(d) ? d : [];
-        setGames(arr);
-        setLastUpdate(new Date());
-        setLiveCount(arr.filter(g => !g.matchIsFinished && new Date(g.matchDateTimeUTC) < new Date()).length);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      .then(d => Array.isArray(d) ? setMatchdays(d) : [])
+      .catch(() => {});
   }, []);
 
+  const fetchGames = useCallback(() => {
+    const url = matchday ? `/api/games/bl1/${matchday}` : '/api/games/bl1/current';
+    fetch(url)
+      .then(r => r.json())
+      .then(d => { setGames(Array.isArray(d) ? d : []); setLastUpdate(new Date()); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [matchday]);
+
   useEffect(() => {
+    setLoading(true);
     fetchGames();
-    // Auto-refresh alle 60s
-    const interval = setInterval(fetchGames, 60000);
-    return () => clearInterval(interval);
+    const iv = setInterval(fetchGames, 60000);
+    return () => clearInterval(iv);
   }, [fetchGames]);
+
+  const liveCount = games.filter(g => !g.matchIsFinished && new Date(g.matchDateTimeUTC) < new Date()).length;
 
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '3rem' }}>⏳ Lade Spiele...</p>;
   if (!games.length) return <p style={{ color: '#666', textAlign: 'center' }}>Keine Spiele gefunden.</p>;
 
   return (
     <div>
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h2 style={{ margin: 0, color: theme.primary, fontSize: '1.1rem' }}>
-          {games[0]?.group?.groupName} – Bundesliga 25/26
+        <h2 style={{ margin: 0, color: theme.primary, fontSize: '1.05rem' }}>
+          {games[0]?.group?.groupName} – BL 25/26
         </h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '0.75rem', color: '#555' }}>
-          {liveCount > 0 && <span style={{ color: '#f87171', fontWeight: 'bold' }}>🔴 {liveCount} LIVE</span>}
-          {lastUpdate && <span>⟳ {lastUpdate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>}
-          <button onClick={fetchGames} style={{ background: '#222', color: '#888', border: '1px solid #333', borderRadius: '5px', padding: '0.2rem 0.6rem', cursor: 'pointer', fontSize: '0.75rem' }}>Aktualisieren</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {liveCount > 0 && <span style={{ color: '#f87171', fontWeight: 'bold', fontSize: '0.8rem' }}>🔴 {liveCount} LIVE</span>}
+
+          {/* Spieltag-Selector */}
+          <select
+            value={matchday || ''}
+            onChange={e => setMatchday(e.target.value ? Number(e.target.value) : null)}
+            style={{ background: '#1a1a1a', color: '#aaa', border: '1px solid #333', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}
+          >
+            <option value=''>Aktuell</option>
+            {matchdays.map(md => (
+              <option key={md.groupOrderID} value={md.groupOrderID}>{md.groupName}</option>
+            ))}
+          </select>
+
+          {lastUpdate && <span style={{ fontSize: '0.72rem', color: '#444' }}>⟳ {lastUpdate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>}
+          <button onClick={fetchGames} style={{ background: '#222', color: '#666', border: '1px solid #2a2a2a', borderRadius: '5px', padding: '0.2rem 0.6rem', cursor: 'pointer', fontSize: '0.75rem' }}>&#8635;</button>
         </div>
       </div>
 
