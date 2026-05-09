@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 const THEMES = [
-  { name: 'Werder Bremen', primary: '#1D9253', secondary: '#FFFFFF' },  // ⭐ Standard!
+  { name: 'Bundesliga', primary: '#E32221', secondary: '#000000' },  // ⭐ Standard
+  { name: 'Werder Bremen', primary: '#1D9253', secondary: '#FFFFFF' },
   { name: 'FC Bayern', primary: '#ED1C24', secondary: '#FFFFFF' },
   { name: 'BVB Dortmund', primary: '#FCEA10', secondary: '#000000' },
   { name: 'Bayer Leverkusen', primary: '#E32221', secondary: '#000000' },
@@ -53,20 +54,20 @@ export default function Settings({ theme, setTheme }) {
       {/* Theme */}
       <div style={block}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>🎨 Theme / Vereinsfarben</h3>
-        <span style={label}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong> {theme.name === 'Werder Bremen' ? '⭐' : ''}</span>
+        <span style={label}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong> {theme.name === 'Bundesliga' ? '⭐' : ''}</span>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.5rem' }}>
           {THEMES.map(t => (
             <button key={t.name} onClick={() => applyTheme(t)} style={{
               background: theme.name === t.name ? t.primary : '#222',
-              color: theme.name === t.name ? '#000' : '#aaa',
+              color: theme.name === t.name ? '#fff' : '#aaa',
               border: `2px solid ${t.primary}`,
               borderRadius: '8px', padding: '0.5rem', cursor: 'pointer',
               fontWeight: theme.name === t.name ? 'bold' : 'normal',
               fontSize: '0.82rem', textAlign: 'left'
             }}>
-              <div style={{ width: '14px', height: '14px', background: t.primary, borderRadius: '50%', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle', border: '1px solid #333' }} />
+              <div style={{ width: '14px', height: '14px', background: t.primary, borderRadius: '50%', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle', border: '1px solid #444' }} />
               {t.name}
-              {t.name === 'Werder Bremen' && ' ⭐'}
+              {t.name === 'Bundesliga' && ' ⭐'}
             </button>
           ))}
         </div>
@@ -84,7 +85,7 @@ export default function Settings({ theme, setTheme }) {
             style={{ flex: 1, background: '#111', color: '#fff', border: '1px solid #333', borderRadius: '6px', padding: '0.5rem 0.8rem', fontSize: '0.9rem' }}
           />
           <button onClick={() => { localStorage.setItem('sn_api_key', apiKey); alert('Key gespeichert!'); }} style={{
-            background: theme.primary, color: '#000', border: 'none', borderRadius: '6px',
+            background: theme.primary, color: '#fff', border: 'none', borderRadius: '6px',
             padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: 'bold'
           }}>Speichern</button>
         </div>
