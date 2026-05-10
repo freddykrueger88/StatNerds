@@ -1,6 +1,8 @@
 # 📊 StatNerds – Penible Sport-Statistiken
 
 ![Docker](https://img.shields.io/badge/Docker-Ready-brightgreen)
+![Version](https://img.shields.io/badge/Version-0.3.0-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 > Ein Tool für Statistik-Nerds: Live-Scores, xG, Gewinnwahrscheinlichkeiten in % und detaillierte Metriken aus kostenlosen APIs.
 
@@ -28,18 +30,19 @@ docker compose up -d --build
 - **[OpenLigaDB](https://openligadb.de)** – Bundesliga, kein Key nötig
 - **[TheSportsDB](https://thesportsdb.com)** – Teams, Logos, Farben
 - **[API-Football](https://api-sports.io)** – Live-Stats, Free-Tier
+- **[Football-Data.org](https://football-data.org)** – Internationale Ligen
 
 ## 🛠️ Tech-Stack
 
 | Layer | Tech |
 |---|---|
-| Frontend | React + Tailwind CSS |
+| Frontend | React |
 | Backend | Node.js + Express |
 | Datenbank | PostgreSQL 16 |
-| Cache | Redis 7 |
+| ORM | Prisma |
 | Container | Docker + Compose |
 
-## 🛑 Befehle
+## 🛝 Befehle
 
 ```bash
 docker compose up -d --build   # Starten
@@ -51,8 +54,21 @@ docker compose down -v         # Stoppen + DB löschen
 ## DB Bereinigung
 
 ```bash
-# Statistiken älter als 14 Tage löschen
 curl -X DELETE http://localhost:8000/api/stats/cleanup?days=14
 ```
 
-Weitere Details: [PROMPT.md](./PROMPT.md) | [TODO.md](./TODO.md)
+---
+
+## 📄 Lizenz & Attribution
+
+MIT License – mach damit was du willst.
+
+**Du musst mich nicht erwähnen.** Dieser Code ist zum größten Teil AI-generiert ("AI slop") und entstand in einer durchgemachten Nacht. Kein Credit nötig.
+
+**ABER:** Wenn du daraus ein kommerzielles Produkt oder eine Premium-App baust und Geld damit verdienst — dann hätte ich gerne **lebenslangen, uneingeschränkten Premium-Zugang**. Das ist der Deal. 🤝
+
+> Kontakt: [github.com/freddykrueger88](https://github.com/freddykrueger88)
+
+---
+
+Weitere Details: [TODO.md](./TODO.md)
