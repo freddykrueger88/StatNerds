@@ -1,22 +1,33 @@
 import React, { useState } from 'react';
 
-const APP_VERSION = '0.3.0';
+const APP_VERSION = '0.4.0';
 const GITHUB_URL = 'https://github.com/freddykrueger88/StatNerds';
 
 const THEMES = [
-  { name: 'Bundesliga', primary: '#E32221', secondary: '#000000' },
-  { name: 'Werder Bremen', primary: '#1D9253', secondary: '#FFFFFF' },
-  { name: 'FC Bayern', primary: '#ED1C24', secondary: '#FFFFFF' },
-  { name: 'BVB Dortmund', primary: '#FCEA10', secondary: '#000000' },
-  { name: 'Bayer Leverkusen', primary: '#E32221', secondary: '#000000' },
-  { name: 'RB Leipzig', primary: '#DD0741', secondary: '#001E62' },
-  { name: 'Schalke 04', primary: '#004D9D', secondary: '#FFFFFF' },
-  { name: 'HSV', primary: '#0B1F69', secondary: '#FFFFFF' },
-  { name: 'Borussia Mönchengladbach', primary: '#00A550', secondary: '#000000' },
-  { name: 'Eintracht Frankfurt', primary: '#E1000F', secondary: '#000000' },
-  { name: 'VfB Stuttgart', primary: '#E32221', secondary: '#FFFFFF' },
-  { name: 'Werder Bremen', primary: '#1D9253', secondary: '#FFFFFF' },
-  { name: 'Nacht (Dark)', primary: '#6366f1', secondary: '#1e1b4b' },
+  { name: 'Bundesliga',              primary: '#E32221', secondary: '#000000', emoji: '⭐' },
+  { name: 'FC Bayern',               primary: '#ED1C24', secondary: '#FFFFFF', emoji: '🔴' },
+  { name: 'BVB Dortmund',            primary: '#FCEA10', secondary: '#000000', emoji: '🟡' },
+  { name: 'Bayer Leverkusen',        primary: '#E32221', secondary: '#000000', emoji: '🔴' },
+  { name: 'RB Leipzig',              primary: '#DD0741', secondary: '#001E62', emoji: '🔴' },
+  { name: 'Eintracht Frankfurt',     primary: '#E1000F', secondary: '#000000', emoji: '🦅' },
+  { name: 'VfB Stuttgart',           primary: '#E32221', secondary: '#FFFFFF', emoji: '🔴' },
+  { name: 'Werder Bremen',           primary: '#1D9253', secondary: '#FFFFFF', emoji: '🟢' },
+  { name: 'Borussia Mönchengladbach', primary: '#00A550', secondary: '#000000', emoji: '🟢' },
+  { name: 'Schalke 04',              primary: '#004D9D', secondary: '#FFFFFF', emoji: '🔵' },
+  { name: 'HSV',                     primary: '#0B1F69', secondary: '#FFFFFF', emoji: '🔵' },
+  { name: 'FC Augsburg',             primary: '#BA3733', secondary: '#FFFFFF', emoji: '🔴' },
+  { name: '1. FC Köln',              primary: '#ED1C24', secondary: '#FFFFFF', emoji: '🐐' },
+  { name: 'FSV Mainz 05',            primary: '#C8102E', secondary: '#FFFFFF', emoji: '🔴' },
+  { name: 'SC Freiburg',             primary: '#E32221', secondary: '#000000', emoji: '🔴' },
+  { name: 'Union Berlin',            primary: '#EB1923', secondary: '#000000', emoji: '🔴' },
+  { name: 'VfL Bochum',              primary: '#005CA8', secondary: '#FFFFFF', emoji: '🔵' },
+  { name: 'VfL Wolfsburg',           primary: '#65B32E', secondary: '#004D93', emoji: '🟢' },
+  { name: 'Nacht (Dark)',            primary: '#6366f1', secondary: '#1e1b4b', emoji: '🌙' },
+];
+
+const FAVORITE_TEAMS = [
+  'Kein Favorit',
+  ...THEMES.filter(t => t.name !== 'Bundesliga' && t.name !== 'Nacht (Dark)').map(t => t.name)
 ];
 
 const API_KEYS = [
@@ -59,7 +70,7 @@ const API_KEYS = [
 ];
 
 const CLEANUP_OPTIONS = [
-  { label: 'Statistiken älter als 7 Tage', days: 7 },
+  { label: 'Statistiken älter als 7 Tage',  days: 7 },
   { label: 'Statistiken älter als 14 Tage', days: 14 },
   { label: 'Statistiken älter als 30 Tage', days: 30 },
   { label: 'Alle gespeicherten Statistiken löschen', days: 0 },
@@ -74,10 +85,25 @@ export default function Settings({ theme, setTheme }) {
   const [savedMsg, setSavedMsg] = useState({});
   const [cleanupDays, setCleanupDays] = useState(30);
   const [cleanupMsg, setCleanupMsg] = useState('');
+  const [favoriteTeam, setFavoriteTeam] = useState(
+    () => localStorage.getItem('sn_favorite_team') || 'Kein Favorit'
+  );
+  const [favSaved, setFavSaved] = useState(false);
 
   const applyTheme = (t) => {
     setTheme(t);
     localStorage.setItem('sn_theme', JSON.stringify(t));
+  };
+
+  const saveFavorite = (teamName) => {
+    setFavoriteTeam(teamName);
+    localStorage.setItem('sn_favorite_team', teamName);
+    if (teamName !== 'Kein Favorit') {
+      const matchTheme = THEMES.find(t => t.name === teamName);
+      if (matchTheme) applyTheme(matchTheme);
+    }
+    setFavSaved(true);
+    setTimeout(() => setFavSaved(false), 2000);
   };
 
   const saveKey = (id) => {
@@ -104,22 +130,52 @@ export default function Settings({ theme, setTheme }) {
     <div style={{ maxWidth: '700px', paddingBottom: '3rem' }}>
       <h2 style={{ color: theme.primary }}>⚙️ Einstellungen</h2>
 
+      {/* Favoriten-Team */}
+      <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>❤️ Mein Verein</h3>
+        <span style={label}>Wähle deinen Lieblingsverein – das Theme passt sich automatisch an</span>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <select
+            value={favoriteTeam}
+            onChange={e => saveFavorite(e.target.value)}
+            style={{
+              flex: 1, background: '#111', color: '#fff',
+              border: `1px solid ${theme.primary}44`,
+              borderRadius: '8px', padding: '0.6rem 0.8rem',
+              fontSize: '0.95rem', cursor: 'pointer'
+            }}
+          >
+            {FAVORITE_TEAMS.map(t => (
+              <option key={t} value={t}>
+                {THEMES.find(th => th.name === t)?.emoji || '⚽'} {t}
+              </option>
+            ))}
+          </select>
+          {favSaved && <span style={{ color: '#4ade80', fontSize: '0.85rem' }}>✅ Gespeichert!</span>}
+        </div>
+        {favoriteTeam !== 'Kein Favorit' && (
+          <p style={{ color: '#555', fontSize: '0.78rem', margin: '0.5rem 0 0 0' }}>
+            Theme automatisch auf <strong style={{ color: theme.primary }}>{favoriteTeam}</strong> gesetzt.
+          </p>
+        )}
+      </div>
+
       {/* Theme */}
       <div style={block}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>🎨 Theme / Vereinsfarben</h3>
         <span style={label}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong></span>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.5rem' }}>
-          {THEMES.filter((t, i, arr) => arr.findIndex(x => x.name === t.name) === i).map(t => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: '0.5rem' }}>
+          {THEMES.map(t => (
             <button key={t.name} onClick={() => applyTheme(t)} style={{
-              background: theme.name === t.name ? t.primary : '#222',
+              background: theme.name === t.name ? t.primary + '22' : '#222',
               color: theme.name === t.name ? '#fff' : '#aaa',
-              border: `2px solid ${t.primary}`,
-              borderRadius: '8px', padding: '0.5rem', cursor: 'pointer',
+              border: `2px solid ${theme.name === t.name ? t.primary : '#2a2a2a'}`,
+              borderRadius: '8px', padding: '0.5rem 0.6rem', cursor: 'pointer',
               fontWeight: theme.name === t.name ? 'bold' : 'normal',
-              fontSize: '0.82rem', textAlign: 'left'
+              fontSize: '0.82rem', textAlign: 'left', transition: 'all 0.15s'
             }}>
-              <div style={{ width: '14px', height: '14px', background: t.primary, borderRadius: '50%', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle', border: '1px solid #444' }} />
-              {t.name}{t.name === 'Bundesliga' ? ' ⭐' : ''}
+              <span style={{ marginRight: '6px' }}>{t.emoji}</span>
+              {t.name}
             </button>
           ))}
         </div>
@@ -197,20 +253,14 @@ export default function Settings({ theme, setTheme }) {
         <div style={{ fontSize: '0.78rem', color: '#444', marginBottom: '0.5rem' }}>
           Version {APP_VERSION}
         </div>
-        <a
-          href={GITHUB_URL}
-          target='_blank'
-          rel='noreferrer'
-          style={{ fontSize: '0.78rem', color: '#555', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-        >
+        <a href={GITHUB_URL} target='_blank' rel='noreferrer'
+          style={{ fontSize: '0.78rem', color: '#555', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
           <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor'>
             <path d='M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z'/>
           </svg>
           GitHub – freddykrueger88/StatNerds
         </a>
-        <div style={{ fontSize: '0.68rem', color: '#2a2a2a', marginTop: '0.5rem' }}>
-          Made with ❤️ & ⚽
-        </div>
+        <div style={{ fontSize: '0.68rem', color: '#2a2a2a', marginTop: '0.5rem' }}>Made with ❤️ & ⚽</div>
       </div>
     </div>
   );
