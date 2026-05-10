@@ -1,0 +1,14 @@
+{
+  "name": "StatNerds",
+  "short_name": "StatNerds",
+  "description": "Bundesliga Live-Statistiken, xG, Prognosen & mehr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#E32221",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

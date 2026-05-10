@@ -21,37 +21,47 @@ export default function App() {
   }, []);
 
   const nav = [
-    { id: 'games',     label: '⚽ Spiele' },
-    { id: 'table',     label: '📊 Tabelle' },
-    { id: 'scorers',   label: '🥅 Statistiken' },
-    { id: 'teamstats', label: '📊 Vereine' },
-    { id: 'teams',     label: '🏟️ Info' },
-    { id: 'settings',  label: '⚙️' },
+    { id: 'games',     label: '⚽',      full: 'Spiele' },
+    { id: 'table',     label: '📊',      full: 'Tabelle' },
+    { id: 'scorers',   label: '🥅',      full: 'Stats' },
+    { id: 'teamstats', label: '📞',      full: 'Vereine' },
+    { id: 'teams',     label: '🏟️',    full: 'Info' },
+    { id: 'settings',  label: '⚙️',      full: '' },
   ];
 
   return (
-    <div style={{ fontFamily: 'sans-serif', background: '#0f0f0f', color: '#fff', minHeight: '100vh' }}>
+    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', background: '#0f0f0f', color: '#fff', minHeight: '100vh', minHeight: '100dvh' }}>
+
+      {/* Desktop Topnav */}
       <nav style={{
         background: '#1a1a1a',
         borderBottom: `2px solid ${theme.primary}`,
-        padding: '0.7rem 1rem',
+        padding: '0.6rem 1rem',
         display: 'flex', alignItems: 'center', gap: '0.4rem',
-        position: 'sticky', top: 0, zIndex: 100, flexWrap: 'wrap'
+        position: 'sticky', top: 0, zIndex: 100,
       }}>
-        <span style={{ fontWeight: 'bold', fontSize: '1.1rem', marginRight: '0.5rem', color: theme.primary }}>📊 StatNerds</span>
-        {nav.map(n => (
-          <button key={n.id} onClick={() => setView(n.id)} style={{
-            background: view === n.id ? theme.primary : 'transparent',
-            color: view === n.id ? '#fff' : '#888',
-            border: 'none', borderRadius: '6px',
-            padding: '0.35rem 0.75rem', cursor: 'pointer',
-            fontWeight: view === n.id ? 'bold' : 'normal', fontSize: '0.85rem'
-          }}>{n.label}</button>
-        ))}
-        <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: health === 'OK' ? '#4ade80' : '#f87171' }}>⬤ {health || '...'}</span>
+        <span style={{ fontWeight: 'bold', fontSize: '1.05rem', marginRight: '0.3rem', color: theme.primary, whiteSpace: 'nowrap' }}>📊 StatNerds</span>
+        <div style={{ display: 'flex', gap: '0.3rem', flex: 1, flexWrap: 'wrap' }}>
+          {nav.map(n => (
+            <button key={n.id} onClick={() => setView(n.id)} style={{
+              background: view === n.id ? theme.primary : 'transparent',
+              color: view === n.id ? '#fff' : '#777',
+              border: 'none', borderRadius: '6px',
+              padding: '0.3rem 0.65rem', cursor: 'pointer',
+              fontWeight: view === n.id ? 'bold' : 'normal',
+              fontSize: '0.85rem', whiteSpace: 'nowrap',
+              transition: 'background 0.15s'
+            }}>
+              <span className='nav-icon'>{n.label}</span>
+              {n.full && <span className='nav-label' style={{ marginLeft: '0.25rem' }}>{n.full}</span>}
+            </button>
+          ))}
+        </div>
+        <span style={{ fontSize: '0.68rem', color: health === 'OK' ? '#4ade80' : '#f87171', flexShrink: 0 }}>⬤ {health || '...'}</span>
       </nav>
 
-      <div style={{ padding: '1rem', maxWidth: '960px', margin: '0 auto' }}>
+      {/* Content */}
+      <div style={{ padding: '0.75rem', maxWidth: '960px', margin: '0 auto', paddingBottom: '5rem' }}>
         {view === 'games'     && <Games     theme={theme} />}
         {view === 'table'     && <Table     theme={theme} />}
         {view === 'scorers'   && <Scorers   theme={theme} />}
@@ -59,6 +69,42 @@ export default function App() {
         {view === 'teams'     && <Teams     theme={theme} />}
         {view === 'settings'  && <Settings  theme={theme} setTheme={setTheme} />}
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        background: '#1a1a1a',
+        borderTop: `2px solid ${theme.primary}`,
+        display: 'flex', justifyContent: 'space-around', alignItems: 'center',
+        padding: '0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom))',
+        zIndex: 200,
+      }} className='mobile-bottom-nav'>
+        {nav.map(n => (
+          <button key={n.id} onClick={() => setView(n.id)} style={{
+            background: 'transparent',
+            border: 'none', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+            padding: '0.3rem 0.5rem', minWidth: '44px', minHeight: '44px',
+            color: view === n.id ? theme.primary : '#555',
+            transition: 'color 0.15s'
+          }}>
+            <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{n.label}</span>
+            {n.full && <span style={{ fontSize: '0.55rem', fontWeight: view === n.id ? 'bold' : 'normal' }}>{n.full}</span>}
+          </button>
+        ))}
+      </nav>
+
+      <style>{`
+        @media (min-width: 600px) {
+          .mobile-bottom-nav { display: none !important; }
+        }
+        @media (max-width: 599px) {
+          .nav-label { display: none; }
+        }
+        @media (max-width: 400px) {
+          .nav-icon { font-size: 1rem; }
+        }
+      `}</style>
     </div>
   );
 }
