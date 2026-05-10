@@ -22,8 +22,8 @@
 - [x] **2.2** Datenbankverbindung (PostgreSQL via `pg`)
 - [x] **2.3** API-Router-Struktur (`/routes/games.js`, `/routes/teams.js`, `/routes/prediction.js`)
 - [x] **2.4** `.dockerignore` für Backend & Frontend
-- [ ] **2.5** Datenbank-Migrationen einrichten (Prisma/Flyway)
-- [ ] **2.6** DB-Schema: Tabellen für Teams, Spiele, Stats, Cache
+- [x] **2.5** Datenbank-Migrationen einrichten (Prisma ORM)
+- [x] **2.6** DB-Schema: Tabellen für Teams, Spiele, Goals, Stats, Broadcast, ApiCache
 
 ---
 
@@ -96,21 +96,18 @@
 
 ---
 
-## Phase 9 – TV, Schiedsrichter & Kommentatoren 📋 (neu)
-
-> Ziel: Pro Spiel anzeigen, wer pfeift, wer kommentiert und wo man es sehen kann
+## Phase 9 – TV, Schiedsrichter & Kommentatoren 📋 (geplant)
 
 - [ ] **9.1** 🎥 **TV-Übertragung**: Pro Spiel anzeigen auf welchem Sender es läuft
   - Länder-Pulldown (DE, AT, CH, UK, US, ...)
   - Je nach Land: DAZN, Sky, ARD, ZDF, Amazon Prime, etc.
-  - Datenquelle: API-Football (`/fixtures/headtohead`) liefert TV-Daten
+  - Datenquelle: API-Football
 - [ ] **9.2** 🔵 **Schiedsrichter**: Pro Spiel den angesetzten Schiedsrichter anzeigen
-  - Name, Nationalität, Profilbild (falls verfügbar)
-  - Datenquelle: API-Football (`/fixtures?id=...`) enthält Referee-Feld
-- [ ] **9.3** 🎤 **Kommentator / Moderator**: Wer moderiert das Spiel in welchem Land
+  - Name, Nationalität, Profilbild
+  - Datenquelle: API-Football
+- [ ] **9.3** 🎤 **Kommentator / Moderator** nach Land
   - Länder-Pulldown verknüpft mit TV-Sender
   - Datenquelle: Manuell gepflegte DB-Tabelle oder Community-API
-  - Fallback: Link zum Sender-Spielplan
 - [ ] **9.4** Backend-Endpunkt `/api/games/bl1/broadcast?matchId=X&country=DE`
 - [ ] **9.5** Frontend: Info-Block in der Spielkarte (Sender-Logo + Schiedsrichter + Kommentator)
 
