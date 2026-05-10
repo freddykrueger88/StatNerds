@@ -96,23 +96,43 @@
 
 ---
 
-## Phase 9 – Weitere Features 📋 (geplant)
+## Phase 9 – TV, Schiedsrichter & Kommentatoren 📋 (neu)
 
-- [ ] **9.1** Push-Notifications bei Toren (Web Push API)
-- [ ] **9.2** Favoriten-Spiele anpinnen
-- [ ] **9.3** Mehrere Ligen (2. Bundesliga, Champions League, Premier League)
-- [ ] **9.4** Dark/Light-Mode Toggle
-- [ ] **9.5** PWA (installierbar auf Handy)
-- [ ] **9.6** Spielerprofilseite mit Saisonstatistiken
+> Ziel: Pro Spiel anzeigen, wer pfeift, wer kommentiert und wo man es sehen kann
+
+- [ ] **9.1** 🎥 **TV-Übertragung**: Pro Spiel anzeigen auf welchem Sender es läuft
+  - Länder-Pulldown (DE, AT, CH, UK, US, ...)
+  - Je nach Land: DAZN, Sky, ARD, ZDF, Amazon Prime, etc.
+  - Datenquelle: API-Football (`/fixtures/headtohead`) liefert TV-Daten
+- [ ] **9.2** 🔵 **Schiedsrichter**: Pro Spiel den angesetzten Schiedsrichter anzeigen
+  - Name, Nationalität, Profilbild (falls verfügbar)
+  - Datenquelle: API-Football (`/fixtures?id=...`) enthält Referee-Feld
+- [ ] **9.3** 🎤 **Kommentator / Moderator**: Wer moderiert das Spiel in welchem Land
+  - Länder-Pulldown verknüpft mit TV-Sender
+  - Datenquelle: Manuell gepflegte DB-Tabelle oder Community-API
+  - Fallback: Link zum Sender-Spielplan
+- [ ] **9.4** Backend-Endpunkt `/api/games/bl1/broadcast?matchId=X&country=DE`
+- [ ] **9.5** Frontend: Info-Block in der Spielkarte (Sender-Logo + Schiedsrichter + Kommentator)
 
 ---
 
-## Phase 10 – Qualität & Deployment 📋 (geplant)
+## Phase 10 – Weitere Features 📋 (geplant)
 
-- [ ] **10.1** Responsive Design (Mobile-Optimierung)
-- [ ] **10.2** Ladeanimationen & Error-States
-- [ ] **10.3** Toast-Notifications für Fehler
-- [ ] **10.4** Unit-Tests für Prediction-Algorithmus
-- [ ] **10.5** CI/CD Pipeline (GitHub Actions → Auto-Deploy)
-- [ ] **10.6** HTTPS mit Reverse Proxy (nginx + Let's Encrypt)
-- [ ] **10.7** Finale README mit Screenshots
+- [ ] **10.1** Push-Notifications bei Toren (Web Push API)
+- [ ] **10.2** Favoriten-Spiele anpinnen
+- [ ] **10.3** Mehrere Ligen (2. Bundesliga, Champions League, Premier League)
+- [ ] **10.4** Dark/Light-Mode Toggle
+- [ ] **10.5** PWA (installierbar auf Handy)
+- [ ] **10.6** Spielerprofilseite mit Saisonstatistiken
+
+---
+
+## Phase 11 – Qualität & Deployment 📋 (geplant)
+
+- [ ] **11.1** Responsive Design (Mobile-Optimierung)
+- [ ] **11.2** Ladeanimationen & Error-States
+- [ ] **11.3** Toast-Notifications für Fehler
+- [ ] **11.4** Unit-Tests für Prediction-Algorithmus
+- [ ] **11.5** CI/CD Pipeline (GitHub Actions → Auto-Deploy)
+- [ ] **11.6** HTTPS mit Reverse Proxy (nginx + Let's Encrypt)
+- [ ] **11.7** Finale README mit Screenshots
