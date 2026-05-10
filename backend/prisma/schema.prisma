@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id            Int       @id @default(autoincrement())
+  externalId    Int       @unique
+  name          String
+  shortName     String?
+  iconUrl       String?
+  league        String    @default("bl1")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  homeGames     Game[]    @relation("HomeTeam")
+  awayGames     Game[]    @relation("AwayTeam")
+  stats         TeamStat[]
+}
+
+model Game {
+  id              Int       @id @default(autoincrement())
+  externalId      Int       @unique
+  matchDateTime   DateTime
+  league          String    @default("bl1")
+  season          Int       @default(2025)
+  matchday        Int
+  homeTeamId      Int
+  awayTeamId      Int
+  homeScore       Int?
+  awayScore       Int?
+  halfHomeScore   Int?
+  halfAwayScore   Int?
+  isFinished      Boolean   @default(false)
+  isLive          Boolean   @default(false)
+  referee         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  homeTeam        Team      @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam        Team      @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  goals           Goal[]
+  broadcasts      Broadcast[]
+}
+
+model Goal {
+  id              Int       @id @default(autoincrement())
+  externalId      Int       @unique
+  gameId          Int
+  scorerName      String
+  scorerTeam      String
+  minute          Int
+  scoreHome       Int
+  scoreAway       Int
+  isPenalty       Boolean   @default(false)
+  isOwnGoal       Boolean   @default(false)
+  isOvertime      Boolean   @default(false)
+
+  game            Game      @relation(fields: [gameId], references: [id])
+}
+
+model TeamStat {
+  id          Int       @id @default(autoincrement())
+  teamId      Int
+  season      Int
+  matchday    Int
+  wins        Int       @default(0)
+  draws       Int       @default(0)
+  losses      Int       @default(0)
+  goalsFor    Int       @default(0)
+  goalsAgainst Int      @default(0)
+  points      Int       @default(0)
+  updatedAt   DateTime  @updatedAt
+
+  team        Team      @relation(fields: [teamId], references: [id])
+
+  @@unique([teamId, season, matchday])
+}
+
+model Broadcast {
+  id          Int       @id @default(autoincrement())
+  gameId      Int
+  country     String    // DE, AT, CH, UK, US ...
+  channel     String    // DAZN, Sky, ARD, ZDF ...
+  channelUrl  String?
+  commentator String?
+  createdAt   DateTime  @default(now())
+
+  game        Game      @relation(fields: [gameId], references: [id])
+
+  @@unique([gameId, country])
+}
+
+model ApiCache {
+  id          Int       @id @default(autoincrement())
+  cacheKey    String    @unique
+  data        Json
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+}
