@@ -15,7 +15,7 @@ app.use(express.json());
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', version: '0.5.0', timestamp: new Date().toISOString(), cache: cache.stats() });
+  res.json({ status: 'OK', version: '0.5.1', timestamp: new Date().toISOString(), cache: cache.stats() });
 });
 
 app.get('/test-db', async (req, res) => {
@@ -34,6 +34,7 @@ app.use('/teams',       require('./routes/teams'));
 app.use('/teamstats',   require('./routes/teamstats'));
 app.use('/prediction',  require('./routes/prediction'));
 app.use('/apifootball', require('./routes/apifootball'));
+app.use('/broadcast',   require('./routes/broadcast').router);
 
 app.delete('/stats/cleanup', async (req, res) => {
   const { days } = req.query;
@@ -50,6 +51,6 @@ app.delete('/stats/cleanup', async (req, res) => {
 app.use(globalErrorHandler);
 
 app.listen(PORT, () => {
-  console.log(`\n📊 StatNerds Backend v0.5.0 → http://localhost:${PORT}`);
+  console.log(`\n📊 StatNerds Backend v0.5.1 → http://localhost:${PORT}`);
   startScheduler(cache);
 });
