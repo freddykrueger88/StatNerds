@@ -2,6 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const cache = require('./cache');
+const startScheduler = require('./scheduler');
+const { globalErrorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -13,7 +16,12 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 // Health
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', version: '0.4.0', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'OK',
+    version: '0.4.0',
+    timestamp: new Date().toISOString(),
+    cache: cache.stats(),
+  });
 });
 
 // DB Test
@@ -47,13 +55,17 @@ app.delete('/stats/cleanup', async (req, res) => {
         [parseInt(days) || 30]
       );
     }
-    res.json({ deleted: result.rowCount, days_threshold: days || 30 });
+    res.json({ deleted: result.rowCount });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// Globaler Error-Handler (muss zuletzt stehen)
+app.use(globalErrorHandler);
+
 app.listen(PORT, () => {
-  console.log(`StatNerds Backend v0.4.0 auf http://localhost:${PORT}`);
-  console.log('Routen: /health /games/bl1 /teams /prediction /apifootball');
+  console.log(`\n📊 StatNerds Backend v0.4.0 → http://localhost:${PORT}`);
+  // Scheduler starten
+  startScheduler(cache);
 });
