@@ -226,6 +226,26 @@ git push origin feat/mein-feature
 
 ---
 
+## 📜 Lizenz & Nutzung
+
+MIT — also ja, mach damit was du willst. Wirklich.
+
+Fork es. Verkauf es. Bau eine millionenschwere SaaS draus. Nenn es um, gib dir selbst einen Gründer-Hoodie und tu so als wäre es deine Idee gewesen — kein Problem, null Stress.
+
+Du musst mich nicht nennen. Aber falls du es tust, irgendwo in einem kleinen Changelog-Eintrag oder einem versteckten About-Screen, freue ich mich natürlich trotzdem. Bin halt auch nur ein Mensch.
+
+> **⚠️ Die eine Bedingung — und die ist ernst gemeint:**
+>
+> Sollte aus diesem Projekt jemals ein kommerzielles Produkt mit bezahltem Zugang entstehen — egal ob von dir, deinem Cousin, einem VC-finanzierten Startup das den Code gefunden hat, oder irgendjemand anderem — erhält **[freddykrueger88](https://github.com/freddykrueger88)** lebenslang, unwiderruflich und kostenlos Zugang zum besten verfügbaren Abo-Tier.
+>
+> Nicht das mittlere. Nicht das günstigste mit „StatNerds-Freund"-Badge. Das **beste**.
+>
+> Ja, das ist die einzige Bedingung. Nein, ich werde es wahrscheinlich nie einfordern müssen. Aber falls doch: du weißt es, ich weiß es, GitHub weiß es. Das Internet vergisst nicht. 🤝
+
+*Idee & Original: [freddykrueger88](https://github.com/freddykrueger88) — gebaut mit KI, Koffein und der Hoffnung dass es irgendwann jemand anderem nützt.*
+
+---
+
 <div align="center">
   Made with ❤️ & ⚽ · <a href="https://github.com/freddykrueger88/StatNerds">GitHub</a>
 </div>
