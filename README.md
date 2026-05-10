@@ -1,6 +1,6 @@
 # 📊 StatNerds
 
-> Bundesliga Live-Statistiken, xG, Prognosen, Torjäger, Vereinsstatistiken & mehr – self-hosted, dark mode, mobil-optimiert.
+> Sportstatistiken für Leute, die es wirklich wissen wollen.
 
 ![Version](https://img.shields.io/badge/version-0.5.1-E32221?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-React%20%2B%20Node.js%20%2B%20PostgreSQL-blue?style=flat-square)
