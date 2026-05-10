@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import GameDetail from './GameDetail';
 
 function PredictionBar({ home, draw, away, team1, team2 }) {
   return (
@@ -28,7 +29,7 @@ function GoalList({ goals }) {
   );
 }
 
-function GameCard({ game, hero, theme }) {
+function GameCard({ game, hero, theme, onClick }) {
   const [pred, setPred] = useState(null);
   const t1 = game.team1?.shortName || game.team1?.teamName;
   const t2 = game.team2?.shortName || game.team2?.teamName;
@@ -44,12 +45,16 @@ function GameCard({ game, hero, theme }) {
   }, [t1, t2]);
 
   return (
-    <div style={{
-      background: hero ? 'linear-gradient(135deg,#1a1a2e,#16213e)' : '#1a1a1a',
-      borderRadius: '12px', padding: hero ? '1.5rem' : '0.9rem',
-      marginBottom: '0.75rem',
-      borderLeft: `4px solid ${isLive ? '#f87171' : game.matchIsFinished ? '#333' : theme.primary}`
-    }}>
+    <div
+      onClick={() => onClick(game)}
+      style={{
+        background: hero ? 'linear-gradient(135deg,#1a1a2e,#16213e)' : '#1a1a1a',
+        borderRadius: '12px', padding: hero ? '1.5rem' : '0.9rem',
+        marginBottom: '0.75rem', cursor: 'pointer',
+        borderLeft: `4px solid ${isLive ? '#f87171' : game.matchIsFinished ? '#333' : theme.primary}`,
+        transition: 'opacity 0.15s'
+      }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1 }}>
           {game.team1?.teamIconUrl && <img src={game.team1.teamIconUrl} alt='' style={{ width: hero ? '32px' : '20px', height: hero ? '32px' : '20px', objectFit: 'contain', flexShrink: 0 }} />}
@@ -74,6 +79,7 @@ function GameCard({ game, hero, theme }) {
       {pred?.home_win !== undefined && (
         <PredictionBar home={pred.home_win} draw={pred.draw} away={pred.away_win} team1={t1} team2={t2} />
       )}
+      <div style={{ textAlign: 'right', fontSize: '0.68rem', color: '#333', marginTop: '0.3rem' }}>Details ›</div>
     </div>
   );
 }
@@ -82,10 +88,10 @@ export default function Games({ theme }) {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [matchday, setMatchday] = useState(null); // null = aktuell
+  const [matchday, setMatchday] = useState(null);
   const [matchdays, setMatchdays] = useState([]);
+  const [selected, setSelected] = useState(null);
 
-  // Spieltagsliste laden
   useEffect(() => {
     fetch('/api/games/bl1/matchdays')
       .then(r => r.json())
@@ -110,38 +116,29 @@ export default function Games({ theme }) {
 
   const liveCount = games.filter(g => !g.matchIsFinished && new Date(g.matchDateTimeUTC) < new Date()).length;
 
+  if (selected) return <GameDetail game={selected} theme={theme} onBack={() => setSelected(null)} />;
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '3rem' }}>⏳ Lade Spiele...</p>;
   if (!games.length) return <p style={{ color: '#666', textAlign: 'center' }}>Keine Spiele gefunden.</p>;
 
   return (
     <div>
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h2 style={{ margin: 0, color: theme.primary, fontSize: '1.05rem' }}>
           {games[0]?.group?.groupName} – BL 25/26
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           {liveCount > 0 && <span style={{ color: '#f87171', fontWeight: 'bold', fontSize: '0.8rem' }}>🔴 {liveCount} LIVE</span>}
-
-          {/* Spieltag-Selector */}
-          <select
-            value={matchday || ''}
-            onChange={e => setMatchday(e.target.value ? Number(e.target.value) : null)}
-            style={{ background: '#1a1a1a', color: '#aaa', border: '1px solid #333', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}
-          >
+          <select value={matchday || ''} onChange={e => setMatchday(e.target.value ? Number(e.target.value) : null)}
+            style={{ background: '#1a1a1a', color: '#aaa', border: '1px solid #333', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}>
             <option value=''>Aktuell</option>
-            {matchdays.map(md => (
-              <option key={md.groupOrderID} value={md.groupOrderID}>{md.groupName}</option>
-            ))}
+            {matchdays.map(md => <option key={md.groupOrderID} value={md.groupOrderID}>{md.groupName}</option>)}
           </select>
-
           {lastUpdate && <span style={{ fontSize: '0.72rem', color: '#444' }}>⟳ {lastUpdate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>}
           <button onClick={fetchGames} style={{ background: '#222', color: '#666', border: '1px solid #2a2a2a', borderRadius: '5px', padding: '0.2rem 0.6rem', cursor: 'pointer', fontSize: '0.75rem' }}>&#8635;</button>
         </div>
       </div>
-
-      <GameCard game={games[0]} hero={true} theme={theme} />
-      {games.slice(1).map((g, i) => <GameCard key={i} game={g} hero={false} theme={theme} />)}
+      <GameCard game={games[0]} hero={true} theme={theme} onClick={setSelected} />
+      {games.slice(1).map((g, i) => <GameCard key={i} game={g} hero={false} theme={theme} onClick={setSelected} />)}
     </div>
   );
 }
