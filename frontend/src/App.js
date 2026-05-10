@@ -5,6 +5,7 @@ import Scorers from './pages/Scorers';
 import Teams from './pages/Teams';
 import TeamStats from './pages/TeamStats';
 import Settings from './pages/Settings';
+import NotificationToggle from './components/NotificationToggle';
 
 const DEFAULT_THEME = { name: 'Bundesliga', primary: '#E32221', secondary: '#000000' };
 
@@ -21,46 +22,42 @@ export default function App() {
   }, []);
 
   const nav = [
-    { id: 'games',     label: '⚽',      full: 'Spiele' },
-    { id: 'table',     label: '📊',      full: 'Tabelle' },
-    { id: 'scorers',   label: '🥅',      full: 'Stats' },
-    { id: 'teamstats', label: '📞',      full: 'Vereine' },
-    { id: 'teams',     label: '🏟️',    full: 'Info' },
-    { id: 'settings',  label: '⚙️',      full: '' },
+    { id: 'games',     label: '⚽',   full: 'Spiele' },
+    { id: 'table',     label: '📊',   full: 'Tabelle' },
+    { id: 'scorers',   label: '🥅',   full: 'Stats' },
+    { id: 'teamstats', label: '📞',   full: 'Vereine' },
+    { id: 'teams',     label: '🏟️',  full: 'Info' },
+    { id: 'settings',  label: '⚙️',  full: '' },
   ];
 
   return (
-    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', background: '#0f0f0f', color: '#fff', minHeight: '100vh', minHeight: '100dvh' }}>
-
-      {/* Desktop Topnav */}
+    <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', background: '#0f0f0f', color: '#fff', minHeight: '100dvh' }}>
       <nav style={{
-        background: '#1a1a1a',
-        borderBottom: `2px solid ${theme.primary}`,
-        padding: '0.6rem 1rem',
-        display: 'flex', alignItems: 'center', gap: '0.4rem',
+        background: '#1a1a1a', borderBottom: `2px solid ${theme.primary}`,
+        padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem',
         position: 'sticky', top: 0, zIndex: 100,
       }}>
-        <span style={{ fontWeight: 'bold', fontSize: '1.05rem', marginRight: '0.3rem', color: theme.primary, whiteSpace: 'nowrap' }}>📊 StatNerds</span>
-        <div style={{ display: 'flex', gap: '0.3rem', flex: 1, flexWrap: 'wrap' }}>
+        <span style={{ fontWeight: 'bold', fontSize: '1rem', marginRight: '0.2rem', color: theme.primary, whiteSpace: 'nowrap' }}>📊 StatNerds</span>
+        <div style={{ display: 'flex', gap: '0.25rem', flex: 1, flexWrap: 'wrap' }}>
           {nav.map(n => (
             <button key={n.id} onClick={() => setView(n.id)} style={{
               background: view === n.id ? theme.primary : 'transparent',
-              color: view === n.id ? '#fff' : '#777',
+              color: view === n.id ? '#fff' : '#666',
               border: 'none', borderRadius: '6px',
-              padding: '0.3rem 0.65rem', cursor: 'pointer',
-              fontWeight: view === n.id ? 'bold' : 'normal',
-              fontSize: '0.85rem', whiteSpace: 'nowrap',
-              transition: 'background 0.15s'
+              padding: '0.3rem 0.55rem', cursor: 'pointer',
+              fontWeight: view === n.id ? 'bold' : 'normal', fontSize: '0.82rem'
             }}>
-              <span className='nav-icon'>{n.label}</span>
-              {n.full && <span className='nav-label' style={{ marginLeft: '0.25rem' }}>{n.full}</span>}
+              <span>{n.label}</span>
+              {n.full && <span className='nav-label' style={{ marginLeft: '0.2rem' }}>{n.full}</span>}
             </button>
           ))}
         </div>
-        <span style={{ fontSize: '0.68rem', color: health === 'OK' ? '#4ade80' : '#f87171', flexShrink: 0 }}>⬤ {health || '...'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+          <NotificationToggle theme={theme} />
+          <span style={{ fontSize: '0.65rem', color: health === 'OK' ? '#4ade80' : '#f87171' }}>⬤ {health || '...'}</span>
+        </div>
       </nav>
 
-      {/* Content */}
       <div style={{ padding: '0.75rem', maxWidth: '960px', margin: '0 auto', paddingBottom: '5rem' }}>
         {view === 'games'     && <Games     theme={theme} />}
         {view === 'table'     && <Table     theme={theme} />}
@@ -70,40 +67,29 @@ export default function App() {
         {view === 'settings'  && <Settings  theme={theme} setTheme={setTheme} />}
       </div>
 
-      {/* Mobile Bottom Navigation */}
       <nav style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: '#1a1a1a',
-        borderTop: `2px solid ${theme.primary}`,
+        background: '#1a1a1a', borderTop: `2px solid ${theme.primary}`,
         display: 'flex', justifyContent: 'space-around', alignItems: 'center',
         padding: '0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom))',
         zIndex: 200,
       }} className='mobile-bottom-nav'>
         {nav.map(n => (
           <button key={n.id} onClick={() => setView(n.id)} style={{
-            background: 'transparent',
-            border: 'none', cursor: 'pointer',
+            background: 'transparent', border: 'none', cursor: 'pointer',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
             padding: '0.3rem 0.5rem', minWidth: '44px', minHeight: '44px',
             color: view === n.id ? theme.primary : '#555',
-            transition: 'color 0.15s'
           }}>
-            <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>{n.label}</span>
-            {n.full && <span style={{ fontSize: '0.55rem', fontWeight: view === n.id ? 'bold' : 'normal' }}>{n.full}</span>}
+            <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{n.label}</span>
+            {n.full && <span style={{ fontSize: '0.52rem', fontWeight: view === n.id ? 'bold' : 'normal' }}>{n.full}</span>}
           </button>
         ))}
       </nav>
 
       <style>{`
-        @media (min-width: 600px) {
-          .mobile-bottom-nav { display: none !important; }
-        }
-        @media (max-width: 599px) {
-          .nav-label { display: none; }
-        }
-        @media (max-width: 400px) {
-          .nav-icon { font-size: 1rem; }
-        }
+        @media (min-width: 600px) { .mobile-bottom-nav { display: none !important; } }
+        @media (max-width: 599px) { .nav-label { display: none; } }
       `}</style>
     </div>
   );
