@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Games from './pages/Games';
 import Table from './pages/Table';
 import Scorers from './pages/Scorers';
+import Teams from './pages/Teams';
 import Settings from './pages/Settings';
 
 const DEFAULT_THEME = { name: 'Bundesliga', primary: '#E32221', secondary: '#000000' };
@@ -19,9 +20,10 @@ export default function App() {
   }, []);
 
   const nav = [
-    { id: 'games', label: '⚽ Spiele' },
-    { id: 'table', label: '📊 Tabelle' },
-    { id: 'scorers', label: '🥅 Torjäger' },
+    { id: 'games',    label: '⚽ Spiele' },
+    { id: 'table',    label: '📊 Tabelle' },
+    { id: 'scorers',  label: '🥅 Torjäger' },
+    { id: 'teams',    label: '🏟️ Vereine' },
     { id: 'settings', label: '⚙️' },
   ];
 
@@ -32,8 +34,7 @@ export default function App() {
         borderBottom: `2px solid ${theme.primary}`,
         padding: '0.7rem 1rem',
         display: 'flex', alignItems: 'center', gap: '0.5rem',
-        position: 'sticky', top: 0, zIndex: 100,
-        flexWrap: 'wrap'
+        position: 'sticky', top: 0, zIndex: 100, flexWrap: 'wrap'
       }}>
         <span style={{ fontWeight: 'bold', fontSize: '1.1rem', marginRight: '0.5rem', color: theme.primary }}>📊 StatNerds</span>
         {nav.map(n => (
@@ -41,10 +42,8 @@ export default function App() {
             background: view === n.id ? theme.primary : 'transparent',
             color: view === n.id ? '#fff' : '#888',
             border: 'none', borderRadius: '6px',
-            padding: '0.35rem 0.8rem',
-            cursor: 'pointer',
-            fontWeight: view === n.id ? 'bold' : 'normal',
-            fontSize: '0.88rem'
+            padding: '0.35rem 0.8rem', cursor: 'pointer',
+            fontWeight: view === n.id ? 'bold' : 'normal', fontSize: '0.88rem'
           }}>{n.label}</button>
         ))}
         <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: health === 'OK' ? '#4ade80' : '#f87171' }}>⬤ {health || '...'}</span>
@@ -54,6 +53,7 @@ export default function App() {
         {view === 'games'    && <Games    theme={theme} />}
         {view === 'table'    && <Table    theme={theme} />}
         {view === 'scorers'  && <Scorers  theme={theme} />}
+        {view === 'teams'    && <Teams    theme={theme} />}
         {view === 'settings' && <Settings theme={theme} setTheme={setTheme} />}
       </div>
     </div>
