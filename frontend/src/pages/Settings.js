@@ -78,6 +78,14 @@ const CLEANUP_OPTIONS = [
   { label: 'Alle gespeicherten Statistiken löschen', days: 0  },
 ];
 
+const COUNTRIES = [
+  { code: 'DE', label: '🇩🇪 Deutschland' },
+  { code: 'AT', label: '🇦🇹 Österreich'   },
+  { code: 'CH', label: '🇨🇭 Schweiz'      },
+  { code: 'GB', label: '🇬🇧 UK'           },
+  { code: 'US', label: '🇺🇸 USA'          },
+];
+
 // Jeder Key bekommt einen eigenen Hook – keine Hooks in Schleifen
 function useApiKeys() {
   const [k0, s0] = useLocalStorage('sn_key_api_football',  '');
@@ -91,14 +99,15 @@ function useApiKeys() {
 }
 
 export default function Settings({ theme, setTheme }) {
-  const { keys, setters }             = useApiKeys();
-  const [draftKeys, setDraftKeys]     = useState(() => ({ ...keys }));
-  const [savedMsg,  setSavedMsg]      = useState({});
-  const [cleanupDays, setCleanupDays] = useState(30);
-  const [cleanupMsg,  setCleanupMsg]  = useState('');
-  const [adminKey]                    = useLocalStorage('sn_admin_key', '');
+  const { keys, setters }               = useApiKeys();
+  const [draftKeys, setDraftKeys]       = useState(() => ({ ...keys }));
+  const [savedMsg,  setSavedMsg]        = useState({});
+  const [cleanupDays, setCleanupDays]   = useState(30);
+  const [cleanupMsg,  setCleanupMsg]    = useState('');
+  const [adminKey]                      = useLocalStorage('sn_admin_key', '');
   const [favoriteTeam, setFavoriteTeam] = useLocalStorage('sn_favorite_team', 'Kein Favorit');
-  const [favSaved, setFavSaved]       = useState(false);
+  const [favSaved, setFavSaved]         = useState(false);
+  const [country, setCountry]           = useLocalStorage('sn_country', 'DE');
 
   const saveFavorite = (teamName) => {
     setFavoriteTeam(teamName);
@@ -153,6 +162,18 @@ export default function Settings({ theme, setTheme }) {
             Theme auf <strong style={{ color: theme.primary }}>{favoriteTeam}</strong> gesetzt.
           </p>
         )}
+      </div>
+
+      {/* Land für TV-Übertragung */}
+      <div style={block}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>🎥 TV-Übertragungsland</h3>
+        <span style={lbl}>Zeigt die TV-Sender deines Landes an (BroadcastBadge)</span>
+        <select value={country} onChange={e => setCountry(e.target.value)}
+          style={{ background: '#111', color: '#fff', border: `1px solid ${theme.primary}44`, borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.95rem', cursor: 'pointer', width: '100%' }}>
+          {COUNTRIES.map(c => (
+            <option key={c.code} value={c.code}>{c.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Theme */}

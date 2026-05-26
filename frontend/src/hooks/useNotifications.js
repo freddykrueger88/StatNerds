@@ -10,7 +10,7 @@ export default function useNotifications() {
   );
   const [watching, setWatching] = useLocalStorage('sn_notify', false);
   const goalSnapshotRef = useRef(null);
-  const timerRef = useRef(null);
+  const timerRef        = useRef(null);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -45,7 +45,7 @@ export default function useNotifications() {
       if (!Array.isArray(games)) return;
 
       const liveGames = games.filter(g => !g.matchIsFinished);
-      const snapshot = {};
+      const snapshot  = {};
       liveGames.forEach(g => { snapshot[g.matchID] = g.goals?.length || 0; });
 
       if (goalSnapshotRef.current !== null) {
@@ -58,7 +58,7 @@ export default function useNotifications() {
               const t2 = g.team2?.shortName || g.team2?.teamName;
               sendNotification(
                 `⚽ TOR! ${t1} – ${t2}`,
-                `${goal.goalGetterName} ${goal.matchMinute}'’ (${goal.scoreTeam1}:${goal.scoreTeam2})${goal.isPenalty ? ' [Elfmeter]' : ''}${goal.isOwnGoal ? ' [Eigentor]' : ''}`,
+                `${goal.goalGetterName} ${goal.matchMinute}' (${goal.scoreTeam1}:${goal.scoreTeam2})${goal.isPenalty ? ' [Elfmeter]' : ''}${goal.isOwnGoal ? ' [Eigentor]' : ''}`,
                 `goal_${g.matchID}`
               );
             });

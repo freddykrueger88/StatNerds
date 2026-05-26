@@ -4,7 +4,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getRefereeProfile, getRefereeApif } from '../services/api';
 
 export default function RefereeBlock({ refereeName, fixtureId, theme }) {
-  const [apiKey] = useLocalStorage('sn_key_api_football', null);
+  const [apiKey] = useLocalStorage('sn_key_api_football', '');
 
   const { data: profile } = useFetch(
     () => refereeName ? getRefereeProfile(refereeName) : Promise.resolve(null),
@@ -28,7 +28,7 @@ export default function RefereeBlock({ refereeName, fixtureId, theme }) {
         <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#ddd' }}>{displayName}</div>
         {apifRef?.venue?.name && (
           <div style={{ fontSize: '0.75rem', color: '#555', marginTop: '1px' }}>
-            🏟️ {apifRef.venue.name}{apifRef.venue.city ? `, ${apifRef.venue.city}` : ''}
+            🏙️ {apifRef.venue.name}{apifRef.venue.city ? `, ${apifRef.venue.city}` : ''}
           </div>
         )}
         {profile?.bio && (
