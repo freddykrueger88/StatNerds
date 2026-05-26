@@ -9,6 +9,11 @@ import { useFavorites } from '../hooks/useFavorites';
 import PredictionBlock from '../components/PredictionBlock';
 import { getCurrentGames, getGamesByDay, getMatchdays } from '../services/api';
 
+const LEAGUES = [
+  { id: 'bl1', label: '1. Bundesliga' },
+  { id: 'bl2', label: '2. Bundesliga' },
+];
+
 // ── CountdownBadge ───────────────────────────────────────────────────────────────
 function CountdownBadge({ date }) {
   const remaining = useCountdown(date);
@@ -31,19 +36,17 @@ function GoalList({ goals }) {
   );
 }
 
-// ── GameCard ─────────────────────────────────────────────────────────────────────
+// ── GameCard ──────────────────────────────────────────────────────────────────────────
 function GameCard({ game, hero, theme, onClick }) {
   const { isFavorite, toggle: toggleFav } = useFavorites();
   const t1 = game.team1?.shortName || game.team1?.teamName;
   const t2 = game.team2?.shortName || game.team2?.teamName;
-  const results = game.matchResults || [];
-  const final   = results.find(r => r.resultTypeID === 2) || results[0];
-  const half    = results.find(r => r.resultTypeID === 1);
-  const isLive  = !game.matchIsFinished && new Date(game.matchDateTimeUTC) < new Date();
+  const results  = game.matchResults || [];
+  const final    = results.find(r => r.resultTypeID === 2) || results[0];
+  const half     = results.find(r => r.resultTypeID === 1);
+  const isLive   = !game.matchIsFinished && new Date(game.matchDateTimeUTC) < new Date();
   const isUpcoming = !game.matchIsFinished && !isLive;
-  const isFav   = isFavorite(game.team1?.teamId) || isFavorite(game.team2?.teamId);
-
-  // Prediction nur auf Hero-Karte laden – nicht auf allen 9 Karten gleichzeitig
+  const isFav    = isFavorite(game.team1?.teamId) || isFavorite(game.team2?.teamId);
   const showPrediction = hero && !game.matchIsFinished;
 
   return (
@@ -55,7 +58,6 @@ function GameCard({ game, hero, theme, onClick }) {
       outline: isFav ? `1px solid ${theme.primary}44` : 'none',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-        {/* Favoriten-Stern */}
         <button
           onClick={e => { e.stopPropagation(); toggleFav(game.team1?.teamId); }}
           title='Verein favorisieren'
@@ -71,8 +73,8 @@ function GameCard({ game, hero, theme, onClick }) {
           <div style={{ fontSize: hero ? '2rem' : '1.2rem', color: '#facc15', fontWeight: 'bold' }}>
             {final ? `${final.pointsTeam1} : ${final.pointsTeam2}` : isLive ? '🔴' : 'vs'}
           </div>
-          {half     && <div style={{ fontSize: '0.68rem', color: '#555' }}>HZ {half.pointsTeam1}:{half.pointsTeam2}</div>}
-          {isLive   && <div style={{ fontSize: '0.68rem', color: '#f87171' }}>● LIVE</div>}
+          {half       && <div style={{ fontSize: '0.68rem', color: '#555' }}>HZ {half.pointsTeam1}:{half.pointsTeam2}</div>}
+          {isLive     && <div style={{ fontSize: '0.68rem', color: '#f87171' }}>● LIVE</div>}
           {isUpcoming && <CountdownBadge date={game.matchDateTimeUTC} />}
         </div>
 
@@ -87,24 +89,22 @@ function GameCard({ game, hero, theme, onClick }) {
       </div>
 
       {hero && <GoalList goals={game.goals} />}
-
-      {/* Prediction nur auf Hero-Karte, nach Bedarf geladen via PredictionBlock */}
-      {showPrediction && t1 && t2 && (
-        <PredictionBlock team1={t1} team2={t2} theme={theme} compact />
-      )}
+      {showPrediction && t1 && t2 && <PredictionBlock team1={t1} team2={t2} theme={theme} compact />}
 
       <div onClick={() => onClick(game)} style={{ textAlign: 'right', fontSize: '0.68rem', color: '#333', marginTop: '0.3rem' }}>Details ›</div>
     </div>
   );
 }
 
-// ── Custom Hook: Games + Toast-Logik ───────────────────────────────────────────────
-function useGamesWithToast(matchday) {
-  const toast          = useToast();
+// ── Games + Toast ────────────────────────────────────────────────────────────────────
+function useGamesWithToast(league, matchday) {
+  const toast            = useToast();
   const prevGoalCountRef = useRef(null);
 
   const fetcher = useCallback(() => {
-    const fn = matchday ? () => getGamesByDay('bl1', matchday) : () => getCurrentGames('bl1');
+    const fn = matchday
+      ? () => getGamesByDay(league, matchday)
+      : () => getCurrentGames(league);
     return fn().then(list => {
       const games     = Array.isArray(list) ? list : [];
       const goalCount = games.reduce((s, g) => s + (g.goals?.length || 0), 0);
@@ -114,22 +114,29 @@ function useGamesWithToast(matchday) {
       prevGoalCountRef.current = goalCount;
       return games;
     });
-  }, [matchday, toast]);
+  }, [league, matchday, toast]);
 
-  return useFetch(fetcher, 60_000, [matchday]);
+  return useFetch(fetcher, 60_000, [league, matchday]);
 }
 
-// ── Games (Hauptseite) ──────────────────────────────────────────────────────────────────
+// ── Games (Hauptseite) ───────────────────────────────────────────────────────────────────
 export default function Games({ theme }) {
-  const [matchday,  setMatchday]  = useState(null);
-  const [selected,  setSelected]  = useState(null);
+  const [league,   setLeague]   = useState('bl1');
+  const [matchday, setMatchday] = useState(null);
+  const [selected, setSelected] = useState(null);
 
-  const matchdaysFetch = useFetch(() => getMatchdays('bl1'));
+  const matchdaysFetch = useFetch(() => getMatchdays(league), null, [league]);
   const matchdays      = Array.isArray(matchdaysFetch.data) ? matchdaysFetch.data : [];
 
-  const { data, loading, error, refetch, lastUpdate } = useGamesWithToast(matchday);
+  const { data, loading, error, refetch, lastUpdate } = useGamesWithToast(league, matchday);
   const games     = Array.isArray(data) ? data : [];
   const liveCount = games.filter(g => !g.matchIsFinished && new Date(g.matchDateTimeUTC) < new Date()).length;
+
+  // Liga-Wechsel: Spieltag-Auswahl zurücksetzen
+  const handleLeagueChange = (newLeague) => {
+    setLeague(newLeague);
+    setMatchday(null);
+  };
 
   if (selected) return <GameDetail game={selected} theme={theme} onBack={() => setSelected(null)} />;
 
@@ -146,9 +153,24 @@ export default function Games({ theme }) {
 
   return (
     <div>
+      {/* Liga-Selector */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        {LEAGUES.map(l => (
+          <button key={l.id} onClick={() => handleLeagueChange(l.id)}
+            style={{
+              background: league === l.id ? theme.primary : '#1a1a1a',
+              color:      league === l.id ? '#000' : '#aaa',
+              border:     `1px solid ${league === l.id ? theme.primary : '#333'}`,
+              borderRadius: '20px', padding: '0.3rem 0.9rem',
+              cursor: 'pointer', fontSize: '0.82rem', fontWeight: league === l.id ? 'bold' : 'normal',
+              transition: 'all 0.15s',
+            }}>{l.label}</button>
+        ))}
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h2 style={{ margin: 0, color: theme.primary, fontSize: '1.05rem' }}>
-          {games[0]?.group?.groupName || 'Bundesliga'} – BL 25/26
+          {games[0]?.group?.groupName || LEAGUES.find(l => l.id === league)?.label} – 25/26
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           {liveCount > 0 && <span style={{ color: '#f87171', fontWeight: 'bold', fontSize: '0.8rem' }}>🔴 {liveCount} LIVE</span>}
@@ -161,8 +183,9 @@ export default function Games({ theme }) {
           <button onClick={refetch} style={{ background: '#222', color: '#666', border: '1px solid #2a2a2a', borderRadius: '5px', padding: '0.2rem 0.6rem', cursor: 'pointer', fontSize: '0.75rem' }}>&#8635;</button>
         </div>
       </div>
+
       {games[0] && <GameCard game={games[0]} hero={true}  theme={theme} onClick={setSelected} />}
-      {games.slice(1).map((g, i) => <GameCard key={i} game={g}  hero={false} theme={theme} onClick={setSelected} />)}
+      {games.slice(1).map((g, i) => <GameCard key={i} game={g} hero={false} theme={theme} onClick={setSelected} />)}
     </div>
   );
 }

@@ -1,13 +1,18 @@
 const express = require('express');
 const cache   = require('../cache');
-// loadAllMatchdays() aus games.js wiederverwenden statt eigene Requests
 const { loadAllMatchdays } = require('./games');
 
 const router = express.Router();
 
-// GET /api/teamstats/bl1
-router.get('/bl1', async (req, res, next) => {
-  const cacheKey = 'teamstats_bl1';
+// GET /api/teamstats/:league
+router.get('/:league', async (req, res, next) => {
+  const league   = req.params.league;
+  const allowed  = ['bl1', 'bl2'];
+  if (!allowed.includes(league)) {
+    return res.status(400).json({ error: `Liga '${league}' nicht unterstützt.` });
+  }
+
+  const cacheKey = `teamstats_${league}`;
   const cached   = cache.get(cacheKey);
   if (cached) return res.json(cached);
 
@@ -22,34 +27,22 @@ router.get('/bl1', async (req, res, next) => {
       };
     };
 
-    const all = await loadAllMatchdays();
+    const all = await loadAllMatchdays(league);
     all.filter(m => m.matchIsFinished).forEach(m => {
       const final = (m.matchResults || []).find(r => r.resultTypeID === 2);
       if (!final) return;
-
       const h  = m.team1?.shortName || m.team1?.teamName;
       const a  = m.team2?.shortName || m.team2?.teamName;
       const hG = final.pointsTeam1;
       const aG = final.pointsTeam2;
-
       ensure(h, m.team1?.teamIconUrl);
       ensure(a, m.team2?.teamIconUrl);
-
-      teams[h].played++;  teams[a].played++;
-      teams[h].goals        += hG;  teams[h].goalsAgainst += aG;
-      teams[a].goals        += aG;  teams[a].goalsAgainst += hG;
-
-      if (hG > aG) {
-        teams[h].wins++;   teams[h].form.push('W');
-        teams[a].losses++; teams[a].form.push('L');
-      } else if (hG === aG) {
-        teams[h].draws++;  teams[h].form.push('D');
-        teams[a].draws++;  teams[a].form.push('D');
-      } else {
-        teams[h].losses++; teams[h].form.push('L');
-        teams[a].wins++;   teams[a].form.push('W');
-      }
-
+      teams[h].played++; teams[a].played++;
+      teams[h].goals += hG; teams[h].goalsAgainst += aG;
+      teams[a].goals += aG; teams[a].goalsAgainst += hG;
+      if (hG > aG)       { teams[h].wins++;   teams[h].form.push('W'); teams[a].losses++; teams[a].form.push('L'); }
+      else if (hG === aG){ teams[h].draws++;  teams[h].form.push('D'); teams[a].draws++;  teams[a].form.push('D'); }
+      else               { teams[h].losses++; teams[h].form.push('L'); teams[a].wins++;   teams[a].form.push('W'); }
       if (hG === 0) teams[a].cleanSheets++;
       if (aG === 0) teams[h].cleanSheets++;
     });
@@ -57,10 +50,10 @@ router.get('/bl1', async (req, res, next) => {
     const result = Object.values(teams)
       .map(t => ({
         ...t,
-        goalDiff:   t.goals - t.goalsAgainst,
-        avgGoals:   t.played ? Math.round((t.goals / t.played) * 100) / 100 : 0,
-        form:       t.form.join('').slice(-5),
-        winRate:    t.played ? Math.round((t.wins / t.played) * 100) : 0,
+        goalDiff: t.goals - t.goalsAgainst,
+        avgGoals: t.played ? Math.round((t.goals / t.played) * 100) / 100 : 0,
+        form:     t.form.join('').slice(-5),
+        winRate:  t.played ? Math.round((t.wins / t.played) * 100) : 0,
       }))
       .sort((a, b) => b.wins - a.wins || b.goalDiff - a.goalDiff);
 
