@@ -1,10 +1,11 @@
 services:
+
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: statnerds
-      POSTGRES_USER: statnerds
+      POSTGRES_DB:       statnerds
+      POSTGRES_USER:     statnerds
       POSTGRES_PASSWORD: statnerds
     volumes:
       - ./db/data:/var/lib/postgresql/data
@@ -12,39 +13,35 @@ services:
     ports:
       - '5432:5432'
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U statnerds']
+      test:     ['CMD-SHELL', 'pg_isready -U statnerds']
       interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    ports:
-      - '6379:6379'
+      timeout:  5s
+      retries:  5
 
   backend:
     build:
-      context: ./backend
+      context:    ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - '8000:8000'
     environment:
-      DATABASE_URL: postgresql://statnerds:statnerds@db:5432/statnerds
-      REDIS_URL: redis://redis:6379
-      API_SPORTS_KEY: ${API_SPORTS_KEY:-}
+      DATABASE_URL:     postgresql://statnerds:statnerds@db:5432/statnerds
+      NODE_ENV:         ${NODE_ENV:-production}
+      ALLOWED_ORIGINS:  ${ALLOWED_ORIGINS:-http://localhost:3000}
+      ADMIN_API_KEY:    ${ADMIN_API_KEY:-}
+      API_FOOTBALL_KEY: ${API_FOOTBALL_KEY:-}
       THE_SPORTSDB_KEY: ${THE_SPORTSDB_KEY:-}
+      FOOTBALL_DATA_KEY:${FOOTBALL_DATA_KEY:-}
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - ./backend/src:/app/src  # nur src mounten, nicht node_modules überschreiben
 
   frontend:
     build:
-      context: ./frontend
+      context:    ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:

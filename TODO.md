@@ -1,133 +1,95 @@
-# ✅ StatNerds – TODO-Liste
+# 📊 StatNerds – TODO / Roadmap
 
-> Stand: Mai 2026 · Aktueller Status wird laufend aktualisiert
-
----
-
-## Phase 1 – Projektfundament ✅
-
-- [x] **1.1** Repository-Struktur anlegen (`/frontend`, `/backend`, `/db`)
-- [x] **1.2** `docker-compose.yml` mit Services: Backend, Frontend, PostgreSQL
-- [x] **1.3** `Dockerfile` für Backend
-- [x] **1.4** `Dockerfile` für Frontend
-- [x] **1.5** Lokales Setup testen: `docker compose up`
-- [x] **1.6** `.env.example` mit Umgebungsvariablen
-- [x] **1.7** `README.md` mit Setup-Anleitung
+> Stand: Mai 2026 · Version 0.6.0
 
 ---
 
-## Phase 2 – Backend-Grundstruktur ✅
+## ✅ Abgeschlossen (0.1.0 – 0.6.0)
 
-- [x] **2.1** Backend-Grundgerüst (Express, Health-Endpoint `/health`)
-- [x] **2.2** Datenbankverbindung (PostgreSQL via `pg`)
-- [x] **2.3** API-Router-Struktur
-- [x] **2.4** `.dockerignore` für Backend & Frontend
-- [x] **2.5** Datenbank-Migrationen (Prisma ORM)
-- [x] **2.6** DB-Schema: Teams, Spiele, Goals, Stats, Broadcast, ApiCache
+### Fundament & Infrastruktur
+- [x] Repository-Struktur (`/frontend`, `/backend`, `/db`)
+- [x] `docker-compose.yml` mit Backend, Frontend, PostgreSQL
+- [x] `Dockerfile` für Backend & Frontend
+- [x] `.env.example` mit allen Variablen
+- [x] `README.md` mit Setup-Anleitung & Architektur
 
----
+### Backend
+- [x] Express-Server mit `/api/` Prefix auf allen Routen
+- [x] PostgreSQL Pool (`db.js`) – geteilt, kein Prisma
+- [x] Zentraler In-Memory Cache mit TTL, Hit-Rate, flush()
+- [x] Scheduler (Spieltag, Tabelle, Cache-Invalidierung) mit Graceful Shutdown
+- [x] Globaler Error-Handler (Axios-Fehler → 502, Rate-Limit → 429)
+- [x] Rate-Limiting (300 Req/15 min, Cleanup 5/h, Health immer frei)
+- [x] CORS mit `ALLOWED_ORIGINS` aus `.env`
+- [x] Admin-Key-Schutz für `/api/stats/cleanup`
+- [x] Alle Routen nutzen `next(err)` – keine direkten `res.status(500)`
+- [x] Alle Routen nutzen zentralen `require('../cache')` – kein lokaler Cache
+- [x] H2H: 102 Requests parallel statt sequentiell
+- [x] `prediction.js`: 3 Saisons parallel geladen
 
-## Phase 3 – API-Integrationen 🔄 (teilweise)
-
-- [x] **3.1** **OpenLigaDB** – Spiele, Tabelle, Spieltage
-- [x] **3.2** **OpenLigaDB** – Torjägerliste
-- [x] **3.3** In-Memory-Cache (1–60 Min TTL)
-- [x] **3.4** Auto-Refresh alle 60s
-- [ ] **3.5** **TheSportsDB** – Vereinsinfos, Logos, Gründungsjahr
-- [ ] **3.6** **API-Football** – Live-xG, Schüsse, Ballbesitz
-- [ ] **3.7** Cron-Job für Hintergrund-Datenabruf
-- [ ] **3.8** Fehlerbehandlung & Fallback bei API-Ausfall
-
----
-
-## Phase 4 – Gewinnwahrscheinlichkeit ✅
-
-- [x] **4.1** Basis-Algorithmus (Heim/Auswärts/Unentschieden)
-- [x] **4.2** Prediction-Bar im Frontend
-- [x] **4.3** H2H-Endpunkt (letzte 3 Saisons)
-- [ ] **4.4** Erweiterte Prediction mit xG-Daten
-- [ ] **4.5** Prediction in DB cachen
-
----
-
-## Phase 5 – Frontend-Grundstruktur ✅
-
-- [x] **5.1** React-App mit Mehrseiten-Struktur
-- [x] **5.2** Sticky Navbar
-- [x] **5.3** Theme-System mit localStorage
-- [x] **5.4** Bundesliga-Theme als Standard
-
----
-
-## Phase 6 – Frontend-Spielansichten ✅
-
-- [x] **6.1** Hero-Karte (erstes Spiel groß)
-- [x] **6.2** Kompakte Karten für alle Spiele
-- [x] **6.3** Vereinslogos
-- [x] **6.4** Halbzeitergebnis
-- [x] **6.5** Torschützenliste (Minute, Elfmeter, Eigentor)
-- [x] **6.6** 🔴 LIVE-Indikator
-- [x] **6.7** Spieltag-Selector Dropdown
-- [ ] **6.8** Spieldetail-Seite mit H2H-Vergleich
-- [ ] **6.9** Animationen & Übergänge
+### Frontend
+- [x] React SPA mit Mehrseiten-Navigation
+- [x] `services/api.js` – einziger Ort für alle fetch()-Aufrufe
+- [x] `useFetch(fetcher, interval, deps)` mit loading/error/data/lastUpdate
+- [x] `useLocalStorage(key, default)` – kein direktes localStorage in Komponenten
+- [x] `useCountdown`, `useFavorites`, `useNotifications`
+- [x] Alle Komponenten (inkl. BroadcastBadge, PredictionBlock, RefereeBlock) nutzen Hooks
+- [x] Theme-System mit 18 Vereinsthemes + Dark Mode
+- [x] Lieblingsverein-Selector → Theme automatisch
+- [x] PWA (Service Worker, manifest.json, installierbar)
+- [x] Mobile Bottom-Nav, iPhone Safe-Area, 44px Touch-Targets
+- [x] Skeleton-Loader, ErrorState mit Retry, Toast-System
+- [x] Push-Notifications (Browser-Push bei Toren)
+- [x] Spieldetail: Score-Hero, Torschützen, H2H, xG-Stats
+- [x] TV-Übertragung pro Land (DE/AT/CH)
+- [x] Schiedsrichter-Block mit Bio
+- [x] Prognose-Balken (historisch + xG-Modell)
+- [x] Tabelle mit CL/Abstiegs-Zonen
+- [x] Torjäger & Assists Top 30
+- [x] Vereinsstatistiken (sortierbar, Form-Badges)
+- [x] Vereinsprofile via TheSportsDB
+- [x] Einstellungen: API-Keys, Themes, Cleanup, Datenquellen
 
 ---
 
-## Phase 7 – Einstellungsseite ✅
+## 🔧 Bekannte offene Punkte (Tech Debt)
 
-- [x] **7.1** Einstellungsseite als eigene Route
-- [x] **7.2** Theme-Auswahl (Bundesliga, Werder, Bayern, BVB, ...)
-- [x] **7.3** API-Key-Verwaltung mit direktem Link zur Registrierungsseite:
-  - [x] API-Football (https://dashboard.api-football.com/register)
-  - [x] TheSportsDB (https://www.thesportsdb.com/api.php)
-  - [x] Football-Data.org (https://www.football-data.org/client/register)
-  - [x] RapidAPI (https://rapidapi.com/hub)
-- [x] **7.4** Datenbankbereinigung (7/14/30 Tage / Alles)
-- [x] **7.5** Datenquellen-Übersicht
-- [x] **7.6** App-Info Footer (Name, Version, GitHub-Link) – zentriert unten
-- [ ] **7.7** Favoriten-Team wählen → Theme automatisch setzen
-- [ ] **7.8** Benachrichtigungs-Einstellungen (Tor-Push)
+- [ ] **Unit-Tests** für `poissonPrediction()` und `buildScorerMap()`
+- [ ] **GitHub Actions CI** – lint + test bei jedem Push
+- [ ] **`/api/health`** – DB-Verbindungscheck einbauen (aktuell nur Cache-Stats)
+- [ ] **Spieltag auto-detect** – Saison-Konstante `2025` in allen Routen dynamisch machen
 
 ---
 
-## Phase 8 – Torjäger & Statistiken 🔄 (in Arbeit)
+## 🚧 Nächste Features
 
-- [x] **8.1** Torjägerliste-Seite mit Top 30
-- [x] **8.2** 🥇🥈🥉 Medaillen für Top 3
-- [x] **8.3** Elfmeter & Eigentor-Spalten
-- [ ] **8.4** Vorlagen-Rangliste (Assists)
-- [ ] **8.5** Vereins-Statistikseite (Tore, Siege, Form)
-- [ ] **8.6** H2H-Frontend-Seite mit Direktvergleich
+### Liga-Erweiterung
+- [ ] 2. Bundesliga (OpenLigaDB: `bl2`)
+- [ ] Champions League (Football-Data.org)
+- [ ] Premier League, La Liga
+- [ ] Liga-Selector im Frontend
 
----
+### Spieler
+- [ ] Spielerprofilseite (Foto, Statistiken, Karriere)
+- [ ] Kader-Übersicht pro Verein
 
-## Phase 9 – TV, Schiedsrichter & Kommentatoren 📋 (geplant)
+### UX
+- [ ] Animationen & Seitenübergänge
+- [ ] Suche (Spieler, Verein, Spiel)
+- [ ] Share-Button für Spieldetail
 
-- [ ] **9.1** 🎥 TV-Übertragung pro Land (DAZN, Sky, ARD, ZDF...)
-- [ ] **9.2** 🔵 Schiedsrichter pro Spiel (API-Football)
-- [ ] **9.3** 🎤 Kommentator / Moderator nach Land
-- [ ] **9.4** Backend-Endpunkt `/api/games/bl1/broadcast`
-- [ ] **9.5** Info-Block in der Spielkarte
-
----
-
-## Phase 10 – Weitere Features 📋 (geplant)
-
-- [ ] **10.1** Push-Notifications bei Toren
-- [ ] **10.2** Favoriten-Spiele anpinnen
-- [ ] **10.3** Mehrere Ligen (2. BL, CL, Premier League)
-- [ ] **10.4** Dark/Light-Mode Toggle
-- [ ] **10.5** PWA (installierbar auf Handy)
-- [ ] **10.6** Spielerprofilseite
+### Deployment
+- [ ] HTTPS via nginx + Let’s Encrypt
+- [ ] GitHub Actions: Build + Deploy
+- [ ] `docker-compose.prod.yml` mit Resource-Limits
+- [ ] Healthcheck-Endpoint mit DB-Ping
 
 ---
 
-## Phase 11 – Qualität & Deployment 📋 (geplant)
+## 💡 Ideen-Backlog
 
-- [ ] **11.1** Responsive Design / Mobile-Optimierung
-- [ ] **11.2** Ladeanimationen & Error-States
-- [ ] **11.3** Toast-Notifications
-- [ ] **11.4** Unit-Tests Prediction-Algorithmus
-- [ ] **11.5** CI/CD Pipeline (GitHub Actions)
-- [ ] **11.6** HTTPS (nginx + Let's Encrypt)
-- [ ] **11.7** Finale README mit Screenshots
+- Basketball (NBA, BBL)
+- Tennis, Eishockey
+- Tipp-Spiel für Freunde
+- Spieltag-Rückblick mit KI-Zusammenfassung
+- Export als CSV / PDF
