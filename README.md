@@ -2,7 +2,7 @@
 
 > Sport-Statistiken für Leute, die es wirklich wissen wollen.
 
-![Version](https://img.shields.io/badge/version-0.5.1-E32221?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.6.0-E32221?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-React%20%2B%20Node.js%20%2B%20PostgreSQL-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
@@ -19,7 +19,10 @@ StatNerds ist eine **offene Sport-Statistik-Plattform** für alle, die mehr woll
 - Spieltag-Selector (alle 34 Spieltage)
 - Hero-Card für das erste Spiel mit Torschützen-Timeline
 - Prognose-Balken direkt auf der Karte (Sieg H / Unentschieden / Sieg A)
+- Countdown-Badge bei kommenden Spielen
+- Favoriten-Stern pro Spielkarte (★)
 - Skeleton-Loader & Error-State mit Retry-Button
+- Toast-Benachrichtigung bei neuen Toren
 
 ### 📋 Spieldetail
 - Großes Score-Hero mit Vereinslogos
@@ -29,7 +32,7 @@ StatNerds ist eine **offene Sport-Statistik-Plattform** für alle, die mehr woll
 - **Schiedsrichter** mit Bio + Live-Daten via API-Football
 - Spielstatistiken (xG, Ballbesitz, Schüsse, Fouls, Karten…)
 - Direkte Duelle (H2H letzte 3 Saisons)
-- KI-Prognose
+- KI-Prognose (historisch + xG-Modell)
 
 ### 📊 Tabelle
 - Aktuelle Ligatabelle
@@ -39,7 +42,7 @@ StatNerds ist eine **offene Sport-Statistik-Plattform** für alle, die mehr woll
 ### 🥅 Statistiken (Torjäger & Vorlagen)
 - Top-30 Torjäger mit Elfmeter & Eigentor-Spalte
 - Top-30 Vorlagengeber (Assists)
-- Tabs: ⚽ Torjäger / 🤝 Vorlagen – lazy loaded
+- Tabs: ⚽ Torjäger / 🤝 Vorlagen
 
 ### 📞 Vereinsstatistiken
 - Alle Vereine als Cards
@@ -70,13 +73,13 @@ StatNerds ist eine **offene Sport-Statistik-Plattform** für alle, die mehr woll
 
 ---
 
-## 🗺️ Roadmap: Mehr als Fußball
+## 🗻️ Roadmap: Mehr als Fußball
 
 StatNerds ist als **erweiterbare Plattform** gedacht. Geplant sind u.a.:
 
 - 🏆 Weitere Fußball-Ligen (2. Bundesliga, Champions League, Premier League, La Liga…)
 - 🏀 Basketball (NBA, BBL)
-- 🎾 Tennis
+- 🏘️ Tennis
 - 🏒 Eishockey
 - 🔌 Modulares Liga-/Sportarten-System über einheitliche API-Adapter
 
@@ -133,25 +136,56 @@ Keys werden in den **Einstellungen (⚙️)** eingetragen und nur lokal im Brows
 
 ```
 StatNerds/
-├── frontend/          # React App (Create React App)
+├── frontend/                  # React App (Create React App)
 │   ├── public/
 │   │   ├── index.html
-│   │   ├── manifest.json  # PWA
-│   │   └── sw.js          # Service Worker
+│   │   ├── manifest.json          # PWA
+│   │   └── sw.js                  # Service Worker
 │   └── src/
-│       ├── App.js
-│       ├── pages/         # Games, Table, Scorers, TeamStats, Teams, Settings
-│       ├── components/    # GameDetail, StatsBar, Toast, Skeleton, BroadcastBadge…
-│       └── hooks/         # useNotifications
-├── backend/           # Express.js API
+│       ├── App.js                 # Root: Theme, Routing, Navigation
+│       ├── services/
+│       │   └── api.js             # ★ Einziger Ort für alle fetch()-Aufrufe
+│       ├── hooks/
+│       │   ├── useFetch.js        # Generischer Fetch-Hook (loading/error/data/lastUpdate)
+│       │   ├── useLocalStorage.js # Persistenter State mit localStorage-Sync
+│       │   ├── useNotifications.js # Push-Notifications + Tor-Polling
+│       │   ├── useFavorites.js    # Favoriten-Vereine
+│       │   └── useCountdown.js    # Countdown-Timer für kommende Spiele
+│       ├── pages/
+│       │   ├── Games.js           # Spieltag + GameCard + Auto-Refresh
+│       │   ├── GameDetail.js      # Spieldetail, Stats, H2H
+│       │   ├── Table.js           # Ligatabelle
+│       │   ├── Scorers.js         # Torjäger & Assists
+│       │   ├── TeamStats.js       # Vereinsstatistiken
+│       │   ├── Teams.js           # Vereinsprofile
+│       │   └── Settings.js        # Einstellungen, Themes, API-Keys
+│       └── components/
+│           ├── BroadcastBadge.js  # TV-Sender-Badges
+│           ├── PredictionBlock.js # Prognose-Balken (basic + xG)
+│           ├── RefereeBlock.js    # Schiedsrichter-Info
+│           ├── StatsBar.js        # Statistik-Balken
+│           ├── Skeleton.js        # Lade-Skeletons
+│           ├── ErrorState.js      # Fehler-Anzeige mit Retry
+│           ├── Toast.js           # Toast-Benachrichtigungen
+│           └── NotificationToggle.js
+├── backend/                   # Express.js API
 │   └── src/
 │       ├── server.js
-│       ├── cache.js       # In-Memory Cache
-│       ├── scheduler.js   # Auto-Refresh Scheduler
-│       └── routes/        # games, teams, teamstats, broadcast, referee, prediction…
+│       ├── cache.js               # In-Memory Cache
+│       ├── scheduler.js           # Auto-Refresh Scheduler
+│       └── routes/                # games, teams, teamstats, broadcast, referee, prediction…
 ├── docker-compose.yml
 └── .env.example
 ```
+
+### Frontend-Architektur-Prinzipien
+
+| Regel | Beschreibung |
+|---|---|
+| **Kein `fetch()` in Komponenten** | Alle API-Calls laufen über `services/api.js` |
+| **Kein `localStorage` direkt** | Nur über `useLocalStorage()` Hook |
+| **Kein manueller Loading-State** | Immer `useFetch()` verwenden |
+| **Fehler immer sichtbar** | `<ErrorState>` mit Retry-Button |
 
 ### Datenquellen
 
@@ -188,19 +222,23 @@ docker compose down -v && docker compose up -d --build
 ## 📡 API Endpoints
 
 ```
-GET  /api/health                    → Status + Version
-GET  /api/games/bl1/current         → Aktueller Spieltag
-GET  /api/games/bl1/:matchday       → Bestimmter Spieltag
-GET  /api/games/bl1/table           → Tabelle
-GET  /api/games/bl1/scorers         → Torjägerliste Top 30
-GET  /api/games/bl1/assists         → Vorlagen Top 30
-GET  /api/games/bl1/h2h             → Head-to-Head
-GET  /api/teamstats/bl1             → Vereinsstatistiken
-GET  /api/broadcast/:date           → TV-Sender für Spielzeit
-GET  /api/referee/profile/:name     → Schiedsrichter-Profil
-GET  /api/prediction                → Match-Prognose
-GET  /api/teams/bl1                 → Vereinsinfos
-DEL  /api/stats/cleanup             → DB bereinigen
+GET  /api/health                         → Status + Version
+GET  /api/games/bl1/current              → Aktueller Spieltag
+GET  /api/games/bl1/:matchday            → Bestimmter Spieltag
+GET  /api/games/bl1/table                → Tabelle
+GET  /api/games/bl1/scorers              → Torjägerliste Top 30
+GET  /api/games/bl1/assists              → Vorlagen Top 30
+GET  /api/games/bl1/h2h                  → Head-to-Head
+GET  /api/games/bl1/matchdays            → Alle Spieltage
+GET  /api/teamstats/bl1                  → Vereinsstatistiken
+GET  /api/teams                          → Vereinsliste
+GET  /api/teams/:id                      → Vereinsdetail
+GET  /api/broadcast/:date                → TV-Sender für Spielzeit
+GET  /api/referee/profile/:name          → Schiedsrichter-Profil
+GET  /api/referee/apif/:fixtureId        → Schiedsrichter via API-Football
+GET  /api/prediction                     → Match-Prognose (historisch)
+GET  /api/prediction/xg                  → Match-Prognose (xG-Modell)
+DEL  /api/stats/cleanup                  → DB bereinigen
 ```
 
 ---
@@ -219,8 +257,9 @@ cd backend && npm install && npm run dev
 
 ## 📝 Changelog
 
-| Version | Features |
+| Version | Highlights |
 |---|---|
+| **0.6.0** | 🔄 Vollständiges Frontend-Refactoring: `services/api.js`, `useFetch`, `useLocalStorage`, `useCountdown`, `useFavorites` – kein `fetch()` mehr in Komponenten |
 | 0.5.1 | Schiedsrichter-Info, TV-Übertragung |
 | 0.5.0 | Vereinsstatistiken, PWA, Mobile Nav |
 | 0.4.0 | Lieblingsverein-Selector, Auto-Theme |
@@ -254,7 +293,7 @@ Du musst mich nicht nennen. Aber falls du es tust, irgendwo in einem kleinen Cha
 >
 > Sollte aus diesem Projekt jemals ein kommerzielles Produkt mit bezahltem Zugang entstehen — egal ob von dir, deinem Cousin, einem VC-finanzierten Startup das den Code gefunden hat, oder irgendjemand anderem — erhält **[freddykrueger88](https://github.com/freddykrueger88)** lebenslang, unwiderruflich und kostenlos Zugang zum besten verfügbaren Abo-Tier.
 >
-> Nicht das mittlere. Nicht das günstigste mit „StatNerds-Freund"-Badge. Das **beste**.
+> Nicht das mittlere. Nicht das günstigste mit „StatNerds-Freund“-Badge. Das **beste**.
 >
 > Ja, das ist die einzige Bedingung. Nein, ich werde es wahrscheinlich nie einfordern müssen. Aber falls doch: du weißt es, ich weiß es, GitHub weiß es. Das Internet vergisst nicht. 🤝
 

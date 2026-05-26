@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { cleanupStats } from '../services/api';
 
-const APP_VERSION = '0.4.0';
+const APP_VERSION = '0.6.0';
 const GITHUB_URL  = 'https://github.com/freddykrueger88/StatNerds';
 
 const THEMES = [
@@ -72,13 +72,12 @@ const API_KEY_DEFS = [
 ];
 
 const CLEANUP_OPTIONS = [
-  { label: 'Statistiken älter als 7 Tage',            days: 7  },
-  { label: 'Statistiken älter als 14 Tage',           days: 14 },
-  { label: 'Statistiken älter als 30 Tage',           days: 30 },
-  { label: 'Alle gespeicherten Statistiken löschen',  days: 0  },
+  { label: 'Statistiken älter als 7 Tage',           days: 7  },
+  { label: 'Statistiken älter als 14 Tage',          days: 14 },
+  { label: 'Statistiken älter als 30 Tage',          days: 30 },
+  { label: 'Alle gespeicherten Statistiken löschen', days: 0  },
 ];
 
-// Hook: API-Key Verwaltung für alle definierten Keys
 function useApiKeys() {
   const hooks = API_KEY_DEFS.map(k => useLocalStorage(`sn_key_${k.id}`, ''));
   const keys    = Object.fromEntries(API_KEY_DEFS.map((k, i) => [k.id, hooks[i][0]]));
@@ -87,16 +86,16 @@ function useApiKeys() {
 }
 
 export default function Settings({ theme, setTheme }) {
-  const { keys, setters } = useApiKeys();
-  const [draftKeys,     setDraftKeys]     = useState(() => Object.fromEntries(API_KEY_DEFS.map(k => [k.id, keys[k.id]])));
-  const [savedMsg,      setSavedMsg]      = useState({});
-  const [cleanupDays,   setCleanupDays]   = useState(30);
-  const [cleanupMsg,    setCleanupMsg]    = useState('');
-  const [adminKey]                        = useLocalStorage('sn_admin_key', '');
-  const [favoriteTeam,  setFavoriteTeam]  = useLocalStorage('sn_favorite_team', 'Kein Favorit');
-  const [favSaved,      setFavSaved]      = useState(false);
+  const { keys, setters }             = useApiKeys();
+  const [draftKeys, setDraftKeys]     = useState(() => Object.fromEntries(API_KEY_DEFS.map(k => [k.id, keys[k.id]])));
+  const [savedMsg,  setSavedMsg]      = useState({});
+  const [cleanupDays, setCleanupDays] = useState(30);
+  const [cleanupMsg,  setCleanupMsg]  = useState('');
+  const [adminKey]                    = useLocalStorage('sn_admin_key', '');
+  const [favoriteTeam, setFavoriteTeam] = useLocalStorage('sn_favorite_team', 'Kein Favorit');
+  const [favSaved, setFavSaved]       = useState(false);
 
-  const applyTheme = (t) => setTheme(t);  // useLocalStorage in App.js persistiert automatisch
+  const applyTheme = (t) => setTheme(t);
 
   const saveFavorite = (teamName) => {
     setFavoriteTeam(teamName);
@@ -116,10 +115,7 @@ export default function Settings({ theme, setTheme }) {
 
   const handleCleanup = async () => {
     if (!window.confirm(`Wirklich löschen (${cleanupDays === 0 ? 'ALLE' : 'älter als ' + cleanupDays + ' Tage'})?`)) return;
-    if (!adminKey) {
-      setCleanupMsg('❌ Kein Admin-Key konfiguriert (Einstellungen → Admin-Key).');
-      return;
-    }
+    if (!adminKey) { setCleanupMsg('❌ Kein Admin-Key konfiguriert.'); return; }
     try {
       const d = await cleanupStats(cleanupDays, adminKey);
       setCleanupMsg(`✅ ${d.deleted} Einträge gelöscht.`);
@@ -136,7 +132,6 @@ export default function Settings({ theme, setTheme }) {
     <div style={{ maxWidth: '700px', paddingBottom: '3rem' }}>
       <h2 style={{ color: theme.primary }}>⚙️ Einstellungen</h2>
 
-      {/* Favoriten-Team */}
       <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>❤️ Mein Verein</h3>
         <span style={lbl}>Wähle deinen Lieblingsverein – das Theme passt sich automatisch an</span>
@@ -151,12 +146,11 @@ export default function Settings({ theme, setTheme }) {
         </div>
         {favoriteTeam !== 'Kein Favorit' && (
           <p style={{ color: '#555', fontSize: '0.78rem', margin: '0.5rem 0 0 0' }}>
-            Theme automatisch auf <strong style={{ color: theme.primary }}>{favoriteTeam}</strong> gesetzt.
+            Theme auf <strong style={{ color: theme.primary }}>{favoriteTeam}</strong> gesetzt.
           </p>
         )}
       </div>
 
-      {/* Theme */}
       <div style={block}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>🎨 Theme / Vereinsfarben</h3>
         <span style={lbl}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong></span>
@@ -169,14 +163,11 @@ export default function Settings({ theme, setTheme }) {
               borderRadius: '8px', padding: '0.5rem 0.6rem', cursor: 'pointer',
               fontWeight: theme.name === t.name ? 'bold' : 'normal',
               fontSize: '0.82rem', textAlign: 'left', transition: 'all 0.15s'
-            }}>
-              <span style={{ marginRight: '6px' }}>{t.emoji}</span>{t.name}
-            </button>
+            }}><span style={{ marginRight: '6px' }}>{t.emoji}</span>{t.name}</button>
           ))}
         </div>
       </div>
 
-      {/* API Keys */}
       <div style={block}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>🔑 API-Keys</h3>
         <p style={{ color: '#555', fontSize: '0.8rem', margin: '0 0 1.2rem 0' }}>
@@ -189,9 +180,7 @@ export default function Settings({ theme, setTheme }) {
                 <span style={{ fontWeight: 'bold', color: '#ddd' }}>{api.label}</span>
                 {api.free && <span style={{ marginLeft: '0.5rem', background: '#14532d', color: '#4ade80', fontSize: '0.65rem', padding: '1px 6px', borderRadius: '4px' }}>FREE</span>}
               </div>
-              <a href={api.url} target='_blank' rel='noreferrer' style={{ fontSize: '0.72rem', color: theme.primary, textDecoration: 'none' }}>
-                🔗 {api.urlLabel}
-              </a>
+              <a href={api.url} target='_blank' rel='noreferrer' style={{ fontSize: '0.72rem', color: theme.primary, textDecoration: 'none' }}>🔗 {api.urlLabel}</a>
             </div>
             <p style={{ color: '#555', fontSize: '0.75rem', margin: '0 0 0.5rem 0' }}>{api.description}</p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -206,15 +195,12 @@ export default function Settings({ theme, setTheme }) {
                 color: '#fff', border: 'none', borderRadius: '6px',
                 padding: '0.45rem 1rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem',
                 minWidth: '90px', transition: 'background 0.3s'
-              }}>
-                {savedMsg[api.id] ? '✅ Gespeichert' : 'Speichern'}
-              </button>
+              }}>{savedMsg[api.id] ? '✅ Gespeichert' : 'Speichern'}</button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Datenbankbereinigung */}
       <div style={block}>
         <h3 style={{ margin: '0 0 1rem 0' }}>🗑️ Datenbankbereinigung</h3>
         <span style={lbl}>Gespeicherte Statistiken löschen um Speicherplatz freizugeben</span>
@@ -228,7 +214,6 @@ export default function Settings({ theme, setTheme }) {
         {cleanupMsg && <p style={{ color: cleanupMsg.startsWith('✅') ? '#4ade80' : '#f87171', marginTop: '0.5rem', fontSize: '0.85rem' }}>{cleanupMsg}</p>}
       </div>
 
-      {/* Datenquellen */}
       <div style={{ ...block, background: '#111', border: '1px solid #1a1a1a' }}>
         <h3 style={{ margin: '0 0 0.5rem 0' }}>ℹ️ Datenquellen</h3>
         <div style={{ fontSize: '0.82rem', color: '#555', lineHeight: '1.9' }}>
@@ -239,7 +224,6 @@ export default function Settings({ theme, setTheme }) {
         </div>
       </div>
 
-      {/* App Info Footer */}
       <div style={{ textAlign: 'center', padding: '1.5rem 0 0.5rem 0', borderTop: '1px solid #1a1a1a', marginTop: '0.5rem' }}>
         <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: theme.primary, marginBottom: '0.3rem' }}>📊 StatNerds</div>
         <div style={{ fontSize: '0.78rem', color: '#444', marginBottom: '0.5rem' }}>Version {APP_VERSION}</div>
