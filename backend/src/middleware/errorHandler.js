@@ -1,30 +1,26 @@
-// Zentraler Error-Handler mit Fallback-Logik
-const cache = require('../cache');
-
-function withFallback(cacheKey, fallbackData = null) {
-  return (err, req, res, next) => {
-    console.error(`❌ API-Fehler [${req.path}]:`, err.message);
-
-    // Versuche alten Cache-Eintrag als Fallback
-    const stale = cache.get(cacheKey);
-    if (stale) {
-      console.warn(`⚠️  Fallback auf gecachte Daten für: ${cacheKey}`);
-      return res.json({ ...stale, _stale: true, _error: err.message });
-    }
-
-    if (fallbackData) return res.json({ ...fallbackData, _error: err.message });
-
-    res.status(503).json({
-      error: 'Dienst vorübergehend nicht verfügbar',
-      details: err.message,
-      retryAfter: 30
-    });
-  };
-}
-
+// Globaler Error-Handler
 function globalErrorHandler(err, req, res, next) {
-  console.error('❌ Unbehandelter Fehler:', err.message);
-  res.status(500).json({ error: 'Interner Serverfehler', details: err.message });
+  const status = err.status || err.statusCode || 500;
+  console.error(`❌ [${req.method} ${req.path}] ${status}: ${err.message}`);
+
+  // Axios-Fehler von externen APIs schön formatieren
+  if (err.isAxiosError) {
+    const upstream = err.response?.status;
+    if (upstream === 429) {
+      return res.status(429).json({ error: 'Externe API Rate-Limit erreicht', retryAfter: 60 });
+    }
+    return res.status(502).json({
+      error:       'Externe API nicht erreichbar',
+      upstream:    upstream || null,
+      details:     err.message,
+      retryAfter:  30,
+    });
+  }
+
+  res.status(status).json({
+    error:   status === 500 ? 'Interner Serverfehler' : err.message,
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  });
 }
 
-module.exports = { withFallback, globalErrorHandler };
+module.exports = { globalErrorHandler };
