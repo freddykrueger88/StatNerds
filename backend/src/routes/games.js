@@ -3,7 +3,8 @@ const axios   = require('axios');
 const cache   = require('../cache');
 
 const router = express.Router();
-const SEASON = '2025';
+// Saison dynamisch aus .env, fallback auf aktuelles Jahr
+const SEASON = process.env.BL_SEASON || String(new Date().getFullYear());
 const LEAGUE = 'bl1';
 
 // ── Rohdaten aller bisherigen Spieltage laden (gecacht) ─────────────────────
@@ -11,9 +12,9 @@ async function loadAllMatchdays() {
   const cached = cache.get('all_matchdays_raw');
   if (cached) return cached;
 
-  const currentRes     = await axios.get(`https://api.openligadb.de/getcurrentgroup/${LEAGUE}`);
+  const currentRes      = await axios.get(`https://api.openligadb.de/getcurrentgroup/${LEAGUE}`);
   const currentMatchday = currentRes.data?.groupOrderID || 34;
-  const matchdays      = Array.from({ length: Math.min(currentMatchday, 34) }, (_, i) => i + 1);
+  const matchdays       = Array.from({ length: Math.min(currentMatchday, 34) }, (_, i) => i + 1);
 
   const responses = await Promise.all(
     matchdays.map(md =>
@@ -120,32 +121,27 @@ router.get('/bl1/h2h', async (req, res, next) => {
   try {
     const { team1, team2 } = req.query;
     if (!team1 || !team2) return res.status(400).json({ error: 'team1 und team2 benötigt' });
-
     const cacheKey = `h2h_${team1.toLowerCase()}_${team2.toLowerCase()}`;
     const cached   = cache.get(cacheKey);
     if (cached) return res.json(cached);
-
     const q1 = team1.toLowerCase();
     const q2 = team2.toLowerCase();
     const allData = await loadAllMatchdays();
-
     const relevant = allData.filter(m => {
       const t1 = (m.team1?.shortName || m.team1?.teamName || '').toLowerCase();
       const t2 = (m.team2?.shortName || m.team2?.teamName || '').toLowerCase();
       return (t1.includes(q1) && t2.includes(q2)) || (t1.includes(q2) && t2.includes(q1));
     });
-
     const result = relevant.map(m => {
       const final = (m.matchResults || []).find(r => r.resultTypeID === 2);
       return {
-        date:     m.matchDateTime,
-        home:     m.team1?.shortName || m.team1?.teamName,
-        away:     m.team2?.shortName || m.team2?.teamName,
-        score:    final ? `${final.pointsTeam1}:${final.pointsTeam2}` : null,
+        date: m.matchDateTime,
+        home: m.team1?.shortName || m.team1?.teamName,
+        away: m.team2?.shortName || m.team2?.teamName,
+        score: final ? `${final.pointsTeam1}:${final.pointsTeam2}` : null,
         finished: m.matchIsFinished,
       };
     });
-
     cache.set(cacheKey, result, 60 * 60 * 1000);
     res.json(result);
   } catch (err) { next(err); }
