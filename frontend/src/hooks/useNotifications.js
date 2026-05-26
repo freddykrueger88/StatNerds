@@ -1,18 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { getCurrentGames } from '../services/api';
+import { useLocalStorage } from './useLocalStorage';
 
-const POLL_INTERVAL = 60 * 1000; // 1 min
+const POLL_INTERVAL = 60 * 1000;
 
 export default function useNotifications() {
   const [permission, setPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
-  const [watching, setWatching] = useState(
-    () => localStorage.getItem('sn_notify') === 'true'
-  );
+  const [watching, setWatching] = useLocalStorage('sn_notify', false);
   const goalSnapshotRef = useRef(null);
   const timerRef = useRef(null);
 
-  // Service Worker registrieren
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
@@ -31,11 +30,8 @@ export default function useNotifications() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then(reg => {
         reg.showNotification(title, {
-          body,
-          icon: '/icon-192.png',
-          badge: '/icon-192.png',
-          tag,
-          vibrate: [200, 100, 200],
+          body, icon: '/icon-192.png', badge: '/icon-192.png',
+          tag, vibrate: [200, 100, 200],
         });
       });
     } else {
@@ -43,11 +39,9 @@ export default function useNotifications() {
     }
   }, [permission]);
 
-  // Tor-Polling
   const pollGoals = useCallback(async () => {
     try {
-      const r = await fetch('/api/games/bl1/current');
-      const games = await r.json();
+      const games = await getCurrentGames('bl1');
       if (!Array.isArray(games)) return;
 
       const liveGames = games.filter(g => !g.matchIsFinished);
@@ -59,13 +53,12 @@ export default function useNotifications() {
           const prev = goalSnapshotRef.current[g.matchID] ?? 0;
           const curr = snapshot[g.matchID];
           if (curr > prev) {
-            const newGoals = (g.goals || []).slice(prev);
-            newGoals.forEach(goal => {
+            (g.goals || []).slice(prev).forEach(goal => {
               const t1 = g.team1?.shortName || g.team1?.teamName;
               const t2 = g.team2?.shortName || g.team2?.teamName;
               sendNotification(
                 `⚽ TOR! ${t1} – ${t2}`,
-                `${goal.goalGetterName} ${goal.matchMinute}' (${goal.scoreTeam1}:${goal.scoreTeam2})${goal.isPenalty ? ' [Elfmeter]' : ''}${goal.isOwnGoal ? ' [Eigentor]' : ''}`,
+                `${goal.goalGetterName} ${goal.matchMinute}'’ (${goal.scoreTeam1}:${goal.scoreTeam2})${goal.isPenalty ? ' [Elfmeter]' : ''}${goal.isOwnGoal ? ' [Eigentor]' : ''}`,
                 `goal_${g.matchID}`
               );
             });
@@ -93,14 +86,12 @@ export default function useNotifications() {
       if (perm !== 'granted') return false;
       goalSnapshotRef.current = null;
       setWatching(true);
-      localStorage.setItem('sn_notify', 'true');
       return true;
     } else {
       setWatching(false);
-      localStorage.setItem('sn_notify', 'false');
       return false;
     }
-  }, [watching, permission, requestPermission]);
+  }, [watching, permission, requestPermission, setWatching]);
 
   return { permission, watching, toggle, sendNotification };
 }

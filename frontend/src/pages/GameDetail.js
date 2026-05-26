@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import StatsBar from '../components/StatsBar';
 import PredictionBlock from '../components/PredictionBlock';
 import BroadcastBadge from '../components/BroadcastBadge';
 import RefereeBlock from '../components/RefereeBlock';
+import ErrorState from '../components/ErrorState';
+import { useFetch } from '../hooks/useFetch';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { getH2H, getApiFootballStats } from '../services/api';
 
 function Timeline({ events }) {
   if (!events?.length) return null;
@@ -11,8 +15,8 @@ function Timeline({ events }) {
       <h4 style={{ color: '#555', fontSize: '0.8rem', marginBottom: '0.5rem' }}>SPIELVERLAUF</h4>
       {events.map((e, i) => {
         const isHome = i % 2 === 0;
-        const icon = e.type === 'Goal' ? (e.detail === 'Penalty' ? '🔵' : '⚽') :
-                     e.type === 'Card' ? (e.detail === 'Yellow Card' ? '🟨' : '🟥') :
+        const icon = e.type === 'Goal'  ? (e.detail === 'Penalty' ? '🔵' : '⚽') :
+                     e.type === 'Card'  ? (e.detail === 'Yellow Card' ? '🟨' : '🟥') :
                      e.type === 'subst' ? '🔄' : 'ℹ️';
         return (
           <div key={i} style={{
@@ -20,12 +24,8 @@ function Timeline({ events }) {
             justifyContent: isHome ? 'flex-start' : 'flex-end',
             marginBottom: '0.3rem', fontSize: '0.78rem'
           }}>
-            {isHome && <span style={{ color: '#555', minWidth: '30px' }}>{e.time?.elapsed}'</span>}
-            {isHome && <span>{icon}</span>}
-            {isHome && <span style={{ color: '#ddd' }}>{e.player?.name}</span>}
-            {!isHome && <span style={{ color: '#ddd' }}>{e.player?.name}</span>}
-            {!isHome && <span>{icon}</span>}
-            {!isHome && <span style={{ color: '#555', minWidth: '30px', textAlign: 'right' }}>{e.time?.elapsed}'</span>}
+            {isHome  && <><span style={{ color: '#555', minWidth: '30px' }}>{e.time?.elapsed}'</span><span>{icon}</span><span style={{ color: '#ddd' }}>{e.player?.name}</span></>}
+            {!isHome && <><span style={{ color: '#ddd' }}>{e.player?.name}</span><span>{icon}</span><span style={{ color: '#555', minWidth: '30px', textAlign: 'right' }}>{e.time?.elapsed}'</span></>}
           </div>
         );
       })}
@@ -34,16 +34,17 @@ function Timeline({ events }) {
 }
 
 function H2HSection({ team1, team2, theme }) {
-  const [h2h, setH2h] = useState([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    if (!team1 || !team2) return;
-    fetch(`/api/games/bl1/h2h?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`)
-      .then(r => r.json()).then(d => { setH2h(Array.isArray(d) ? d : []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [team1, team2]);
+  const { data, loading, error } = useFetch(
+    () => getH2H(team1, team2),
+    null,
+    [team1, team2]
+  );
+  const h2h = Array.isArray(data) ? data : [];
+
   if (loading) return <p style={{ color: '#555', fontSize: '0.8rem' }}>⏳ Lade H2H...</p>;
+  if (error)   return <p style={{ color: '#444', fontSize: '0.8rem' }}>Keine H2H-Daten.</p>;
   if (!h2h.length) return <p style={{ color: '#444', fontSize: '0.8rem' }}>Keine H2H-Daten.</p>;
+
   return (
     <div>
       <h4 style={{ color: '#555', fontSize: '0.8rem', marginBottom: '0.5rem' }}>DIREKTE DUELLE</h4>
@@ -60,23 +61,20 @@ function H2HSection({ team1, team2, theme }) {
 }
 
 export default function GameDetail({ game, theme, onBack }) {
-  const [stats, setStats] = useState(null);
-  const [loadingStats, setLoadingStats] = useState(false);
-  const apiKey = localStorage.getItem('sn_key_api_football');
+  const [apiKey] = useLocalStorage('sn_key_api_football', null);
 
   const t1 = game.team1?.shortName || game.team1?.teamName;
   const t2 = game.team2?.shortName || game.team2?.teamName;
   const results = game.matchResults || [];
-  const final = results.find(r => r.resultTypeID === 2) || results[0];
-  const half  = results.find(r => r.resultTypeID === 1);
+  const final   = results.find(r => r.resultTypeID === 2) || results[0];
+  const half    = results.find(r => r.resultTypeID === 1);
 
-  useEffect(() => {
-    if (!apiKey || !game.externalFixtureId) return;
-    setLoadingStats(true);
-    fetch(`/api/apifootball/stats/${game.externalFixtureId}`, { headers: { 'x-api-key': apiKey } })
-      .then(r => r.json()).then(d => { setStats(d); setLoadingStats(false); })
-      .catch(() => setLoadingStats(false));
-  }, [game.externalFixtureId, apiKey]);
+  const hasApiKey   = !!(apiKey && game.externalFixtureId);
+  const statsFetch  = useFetch(
+    () => getApiFootballStats(game.externalFixtureId, apiKey),
+    null,
+    [game.externalFixtureId, apiKey]
+  );
 
   const block = { background: '#1a1a1a', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' };
 
@@ -112,41 +110,42 @@ export default function GameDetail({ game, theme, onBack }) {
             ))}
           </div>
         )}
-
-        {/* TV + SR direkt im Hero */}
         <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
           <BroadcastBadge matchDate={game.matchDateTime} />
           <RefereeBlock refereeName={game.referee} fixtureId={game.externalFixtureId} theme={theme} />
         </div>
       </div>
 
-      {/* Prediction */}
+      {/* Prognose */}
       <div style={block}>
         <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: '#aaa' }}>🔮 Prognose</h4>
         <PredictionBlock team1={t1} team2={t2} fixtureId={game.externalFixtureId} theme={theme} />
       </div>
 
-      {/* Live-Stats */}
-      {(stats || loadingStats) && (
+      {/* Live-Stats (nur wenn API-Key vorhanden) */}
+      {hasApiKey && (
         <div style={block}>
           <h4 style={{ margin: '0 0 0.8rem 0', fontSize: '0.85rem', color: '#aaa' }}>📊 Spielstatistiken</h4>
-          {loadingStats
-            ? <p style={{ color: '#555', fontSize: '0.8rem' }}>⏳ Lade Stats...</p>
-            : stats && (
+          {statsFetch.loading && <p style={{ color: '#555', fontSize: '0.8rem' }}>⏳ Lade Stats...</p>}
+          {statsFetch.error   && <ErrorState message={statsFetch.error} onRetry={statsFetch.refetch} icon='📊' />}
+          {statsFetch.data && (() => {
+            const stats = statsFetch.data;
+            return (
               <div>
-                <StatsBar label='Ballbesitz'      home={stats.home?.possession}     away={stats.away?.possession}     homeColor={theme.primary} />
-                <StatsBar label='xG'              home={stats.home?.xG}             away={stats.away?.xG}             homeColor={theme.primary} />
-                <StatsBar label='Schüsse'         home={stats.home?.shots}           away={stats.away?.shots}           homeColor={theme.primary} />
-                <StatsBar label='Auf Tor'         home={stats.home?.shotsOnTarget}   away={stats.away?.shotsOnTarget}   homeColor={theme.primary} />
-                <StatsBar label='Ecken'           home={stats.home?.corners}         away={stats.away?.corners}         homeColor={theme.primary} />
-                <StatsBar label='Fouls'           home={stats.home?.fouls}           away={stats.away?.fouls}           homeColor={theme.primary} />
-                <StatsBar label='🟨 Gelb'         home={stats.home?.yellowCards}     away={stats.away?.yellowCards}     homeColor='#facc15' />
-                <StatsBar label='🟥 Rot'          home={stats.home?.redCards}        away={stats.away?.redCards}        homeColor='#f87171' />
-                <StatsBar label='Pässe'           home={stats.home?.passes}           away={stats.away?.passes}           homeColor={theme.primary} />
-                <StatsBar label='Passgenauigkeit' home={stats.home?.passAccuracy}    away={stats.away?.passAccuracy}    homeColor={theme.primary} />
+                <StatsBar label='Ballbesitz'      home={stats.home?.possession}    away={stats.away?.possession}    homeColor={theme.primary} />
+                <StatsBar label='xG'              home={stats.home?.xG}            away={stats.away?.xG}            homeColor={theme.primary} />
+                <StatsBar label='Schüsse'         home={stats.home?.shots}          away={stats.away?.shots}          homeColor={theme.primary} />
+                <StatsBar label='Auf Tor'         home={stats.home?.shotsOnTarget} away={stats.away?.shotsOnTarget} homeColor={theme.primary} />
+                <StatsBar label='Ecken'           home={stats.home?.corners}       away={stats.away?.corners}       homeColor={theme.primary} />
+                <StatsBar label='Fouls'           home={stats.home?.fouls}         away={stats.away?.fouls}         homeColor={theme.primary} />
+                <StatsBar label='🟨 Gelb'         home={stats.home?.yellowCards}  away={stats.away?.yellowCards}   homeColor='#facc15' />
+                <StatsBar label='🟥 Rot'          home={stats.home?.redCards}     away={stats.away?.redCards}      homeColor='#f87171' />
+                <StatsBar label='Pässe'           home={stats.home?.passes}        away={stats.away?.passes}        homeColor={theme.primary} />
+                <StatsBar label='Passgenauigkeit' home={stats.home?.passAccuracy}  away={stats.away?.passAccuracy}  homeColor={theme.primary} />
                 {stats.events?.length > 0 && <Timeline events={stats.events} />}
               </div>
-            )}
+            );
+          })()}
         </div>
       )}
 
