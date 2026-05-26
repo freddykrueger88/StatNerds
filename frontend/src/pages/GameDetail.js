@@ -42,8 +42,7 @@ function H2HSection({ team1, team2, theme }) {
   const h2h = Array.isArray(data) ? data : [];
 
   if (loading) return <p style={{ color: '#555', fontSize: '0.8rem' }}>⏳ Lade H2H...</p>;
-  if (error)   return <p style={{ color: '#444', fontSize: '0.8rem' }}>Keine H2H-Daten.</p>;
-  if (!h2h.length) return <p style={{ color: '#444', fontSize: '0.8rem' }}>Keine H2H-Daten.</p>;
+  if (error || !h2h.length) return <p style={{ color: '#444', fontSize: '0.8rem' }}>Keine H2H-Daten.</p>;
 
   return (
     <div>
@@ -61,7 +60,7 @@ function H2HSection({ team1, team2, theme }) {
 }
 
 export default function GameDetail({ game, theme, onBack }) {
-  const [apiKey] = useLocalStorage('sn_key_api_football', null);
+  const [apiKey] = useLocalStorage('sn_key_api_football', '');
 
   const t1 = game.team1?.shortName || game.team1?.teamName;
   const t2 = game.team2?.shortName || game.team2?.teamName;
@@ -69,8 +68,8 @@ export default function GameDetail({ game, theme, onBack }) {
   const final   = results.find(r => r.resultTypeID === 2) || results[0];
   const half    = results.find(r => r.resultTypeID === 1);
 
-  const hasApiKey   = !!(apiKey && game.externalFixtureId);
-  const statsFetch  = useFetch(
+  const hasApiKey  = !!(apiKey && game.externalFixtureId);
+  const statsFetch = useFetch(
     () => getApiFootballStats(game.externalFixtureId, apiKey),
     null,
     [game.externalFixtureId, apiKey]
@@ -122,7 +121,7 @@ export default function GameDetail({ game, theme, onBack }) {
         <PredictionBlock team1={t1} team2={t2} fixtureId={game.externalFixtureId} theme={theme} />
       </div>
 
-      {/* Live-Stats (nur wenn API-Key vorhanden) */}
+      {/* Live-Stats */}
       {hasApiKey && (
         <div style={block}>
           <h4 style={{ margin: '0 0 0.8rem 0', fontSize: '0.85rem', color: '#aaa' }}>📊 Spielstatistiken</h4>

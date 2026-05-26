@@ -4,12 +4,12 @@ import { getTeamStats } from '../services/api';
 import ErrorState from '../components/ErrorState';
 
 const SORT_OPTIONS = [
-  { key: 'wins',       label: '🏆 Siege' },
-  { key: 'goals',      label: '⚽ Tore' },
-  { key: 'goalDiff',   label: '📈 Tordiff.' },
-  { key: 'cleanSheets',label: '🧤 Clean Sheets' },
-  { key: 'avgGoals',   label: '📊 Ø Tore/Spiel' },
-  { key: 'winRate',    label: '% Siegquote' },
+  { key: 'wins',        label: '🏆 Siege'        },
+  { key: 'goals',       label: '⚽ Tore'           },
+  { key: 'goalDiff',    label: '📈 Tordiff.'      },
+  { key: 'cleanSheets', label: '🧤 Clean Sheets'  },
+  { key: 'avgGoals',    label: '📊 Ø Tore/Spiel'  },
+  { key: 'winRate',     label: '% Siegquote'      },
 ];
 
 export default function TeamStats({ theme }) {
@@ -17,14 +17,14 @@ export default function TeamStats({ theme }) {
   const { data, loading, error, refetch } = useFetch(() => getTeamStats('bl1'));
 
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '3rem' }}>⏳ Lade Vereinsstatistiken...</p>;
-  if (error)   return <ErrorState message={error} onRetry={refetch} icon='📞' />;
+  if (error)   return <ErrorState message={error} onRetry={refetch} icon='📈' />;
 
   const teams = Array.isArray(data) ? [...data].sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0)) : [];
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <h2 style={{ margin: 0, color: theme.primary }}>📞 Vereinsstatistiken</h2>
+        <h2 style={{ margin: 0, color: theme.primary }}>📈 Vereinsstatistiken</h2>
         <select value={sortKey} onChange={e => setSortKey(e.target.value)}
           style={{ background: '#1a1a1a', color: '#aaa', border: '1px solid #333', borderRadius: '6px', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
           {SORT_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}

@@ -30,9 +30,12 @@ export default function Table({ theme }) {
               background: i < 4 ? 'rgba(74,222,128,0.04)' : i > 14 ? 'rgba(248,113,113,0.04)' : 'transparent'
             }}>
               <td style={{ padding: '0.5rem', color: i < 4 ? '#4ade80' : i > 14 ? '#f87171' : '#aaa', fontWeight: 'bold' }}>{i + 1}</td>
-              <td style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {t.teamIconUrl && <img src={t.teamIconUrl} alt='' style={{ width: '20px', height: '20px', objectFit: 'contain' }} />}
-                {t.teamName}
+              <td style={{ padding: '0.5rem' }}>
+                {/* Wrapper-div nötig – td darf kein flex-Container sein */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {t.teamIconUrl && <img src={t.teamIconUrl} alt='' style={{ width: '20px', height: '20px', objectFit: 'contain' }} />}
+                  {t.teamName}
+                </div>
               </td>
               <td style={{ textAlign: 'center', color: '#888' }}>{t.matches}</td>
               <td style={{ textAlign: 'center', color: '#4ade80' }}>{t.won}</td>

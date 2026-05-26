@@ -22,7 +22,8 @@ function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, re
       </thead>
       <tbody>
         {data.map((s, i) => (
-          <tr key={i} style={{ borderBottom: '1px solid #111', background: i < 3 ? 'rgba(250,204,21,0.04)' : 'transparent', transition: 'background 0.15s' }}
+          <tr key={i}
+            style={{ borderBottom: '1px solid #111', background: i < 3 ? 'rgba(250,204,21,0.04)' : 'transparent', transition: 'background 0.15s' }}
             onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'}
             onMouseLeave={e => e.currentTarget.style.background = i < 3 ? 'rgba(250,204,21,0.04)' : 'transparent'}
           >
@@ -44,8 +45,9 @@ function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, re
 export default function Scorers({ theme }) {
   const [tab, setTab] = useState('goals');
 
-  const scorersFetch = useFetch(() => getScorers('bl1'));
-  const assistsFetch = useFetch(() => getAssists('bl1'));
+  // Lazy: nur den aktiven Tab fetchen
+  const scorersFetch = useFetch(() => getScorers('bl1'),  null, [tab === 'goals']);
+  const assistsFetch = useFetch(() => getAssists('bl1'),  null, [tab === 'assists']);
 
   const scorers = Array.isArray(scorersFetch.data) ? scorersFetch.data : [];
   const assists = Array.isArray(assistsFetch.data) ? assistsFetch.data : [];
