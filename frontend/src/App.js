@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import Games from './pages/Games';
-import Table from './pages/Table';
-import Scorers from './pages/Scorers';
-import Teams from './pages/Teams';
+import Games     from './pages/Games';
+import Table     from './pages/Table';
+import Scorers   from './pages/Scorers';
+import Teams     from './pages/Teams';
 import TeamStats from './pages/TeamStats';
-import Settings from './pages/Settings';
+import Settings  from './pages/Settings';
 import NotificationToggle from './components/NotificationToggle';
-import { useFetch } from './hooks/useFetch';
-import { getHealth } from './services/api';
+import { useFetch }       from './hooks/useFetch';
+import { getHealth }      from './services/api';
 import { useLocalStorage } from './hooks/useLocalStorage';
 
 const DEFAULT_THEME = { name: 'Bundesliga', primary: '#E32221', secondary: '#000000' };
@@ -15,16 +15,16 @@ const DEFAULT_THEME = { name: 'Bundesliga', primary: '#E32221', secondary: '#000
 export default function App() {
   const [view, setView] = useState('games');
   const [theme, setTheme] = useLocalStorage('sn_theme', DEFAULT_THEME);
-  const { data: healthData } = useFetch(() => getHealth());
+  const { data: healthData } = useFetch(() => getHealth(), 60_000);
   const health = healthData?.status || null;
 
   const nav = [
-    { id: 'games',     label: '⚽',   full: 'Spiele' },
-    { id: 'table',     label: '📊',   full: 'Tabelle' },
-    { id: 'scorers',   label: '🥅',   full: 'Stats' },
-    { id: 'teamstats', label: '📞',   full: 'Vereine' },
-    { id: 'teams',     label: '🏟️',  full: 'Info' },
-    { id: 'settings',  label: '⚙️',  full: '' },
+    { id: 'games',     label: '⚽',   full: 'Spiele'   },
+    { id: 'table',     label: '📊',   full: 'Tabelle'  },
+    { id: 'scorers',   label: '🥅',   full: 'Stats'    },
+    { id: 'teamstats', label: '📈',   full: 'Vereine'  },
+    { id: 'teams',     label: '🏙️',  full: 'Info'     },
+    { id: 'settings',  label: '⚙️',  full: ''         },
   ];
 
   return (
