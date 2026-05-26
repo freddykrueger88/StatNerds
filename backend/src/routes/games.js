@@ -6,14 +6,14 @@ const router = express.Router();
 const SEASON = '2025';
 const LEAGUE = 'bl1';
 
-// ── Hilfsfunktion: Rohdaten aller bisherigen Spieltage ─────────────────────
+// ── Rohdaten aller bisherigen Spieltage laden (gecacht) ─────────────────────
 async function loadAllMatchdays() {
   const cached = cache.get('all_matchdays_raw');
   if (cached) return cached;
 
-  const currentRes = await axios.get(`https://api.openligadb.de/getcurrentgroup/${LEAGUE}`);
+  const currentRes    = await axios.get(`https://api.openligadb.de/getcurrentgroup/${LEAGUE}`);
   const currentMatchday = currentRes.data?.groupOrderID || 34;
-  const matchdays = Array.from({ length: Math.min(currentMatchday, 34) }, (_, i) => i + 1);
+  const matchdays     = Array.from({ length: Math.min(currentMatchday, 34) }, (_, i) => i + 1);
 
   const responses = await Promise.all(
     matchdays.map(md =>
@@ -27,16 +27,15 @@ async function loadAllMatchdays() {
   return all;
 }
 
-// ── Hilfsfunktion: Scorer-Map aus Spieltag-Daten berechnen ─────────────────
+// ── Scorer-Map aus Spieltag-Daten berechnen ─────────────────────────────────
 function buildScorerMap(matches) {
   const scorerMap = {};
   matches.forEach(match => {
     (match.goals || []).forEach(goal => {
       if (!goal.goalGetterName?.trim()) return;
       const name = goal.goalGetterName;
-      const team = goal.isOwnGoal
-        ? (match.team2?.shortName || match.team2?.teamName)
-        : (match.team1?.shortName || match.team1?.teamName);
+      // Eigentor-Schuütze spielt für team1 (hat ins eigene Tor geschossen)
+      const team = match.team1?.shortName || match.team1?.teamName;
       if (!scorerMap[name]) scorerMap[name] = { name, team, goals: 0, penalties: 0, ownGoals: 0 };
       if (goal.isOwnGoal) scorerMap[name].ownGoals++;
       else { scorerMap[name].goals++; if (goal.isPenalty) scorerMap[name].penalties++; }
@@ -59,9 +58,9 @@ router.get('/bl1/current', async (req, res, next) => {
 // ── GET /api/games/bl1/:matchday ───────────────────────────────────────────
 router.get('/bl1/:matchday(\\d+)', async (req, res, next) => {
   try {
-    const md  = parseInt(req.params.matchday);
+    const md = parseInt(req.params.matchday);
     if (md < 1 || md > 34) return res.status(400).json({ error: 'Spieltag muss zwischen 1 und 34 liegen' });
-    const key = `md_${md}`;
+    const key    = `md_${md}`;
     const cached = cache.get(key);
     if (cached) return res.json(cached);
     const r = await axios.get(`https://api.openligadb.de/getmatchdata/${LEAGUE}/${SEASON}/${md}`);
@@ -99,7 +98,7 @@ router.get('/bl1/assists', async (req, res, next) => {
   try {
     const cached = cache.get('assists');
     if (cached) return res.json(cached);
-    const all      = await loadAllMatchdays();
+    const all       = await loadAllMatchdays();
     const assistMap = {};
     all.forEach(match => {
       (match.goals || []).forEach(goal => {
@@ -118,7 +117,7 @@ router.get('/bl1/assists', async (req, res, next) => {
 });
 
 // ── GET /api/games/bl1/h2h?team1=X&team2=Y ────────────────────────────────
-// Optimiert: lädt alle Spieltage parallel statt sequentiell (war 102 requests nacheinander)
+// Nutzt loadAllMatchdays() – kein eigener 102-Request-Burst mehr
 router.get('/bl1/h2h', async (req, res, next) => {
   try {
     const { team1, team2 } = req.query;
@@ -130,17 +129,9 @@ router.get('/bl1/h2h', async (req, res, next) => {
 
     const q1 = team1.toLowerCase();
     const q2 = team2.toLowerCase();
-    const seasons = [2023, 2024, 2025];
 
-    // Alle Spieltage aller 3 Saisons PARALLEL laden statt sequentiell
-    const allRequests = seasons.flatMap(season =>
-      Array.from({ length: 34 }, (_, i) =>
-        axios.get(`https://api.openligadb.de/getmatchdata/${LEAGUE}/${season}/${i + 1}`)
-          .then(r => r.data)
-          .catch(() => [])
-      )
-    );
-    const allData = (await Promise.all(allRequests)).flat();
+    // Gecachte Spieltage statt 102 parallele Requests
+    const allData = await loadAllMatchdays();
 
     const relevant = allData.filter(m => {
       const t1 = (m.team1?.shortName || m.team1?.teamName || '').toLowerCase();
