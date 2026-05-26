@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useFetch } from '../hooks/useFetch';
+import { getScorers, getAssists } from '../services/api';
+import ErrorState from '../components/ErrorState';
 
-function RankTable({ data, valueKey, valueLabel, icon, theme, loading, emptyMsg }) {
+function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, refetch, emptyMsg }) {
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '2rem' }}>⏳ Lade...</p>;
+  if (error)   return <ErrorState message={error} onRetry={refetch} icon={icon} />;
   if (!data.length) return <p style={{ color: '#555', textAlign: 'center', marginTop: '2rem' }}>{emptyMsg}</p>;
 
   return (
@@ -39,41 +43,20 @@ function RankTable({ data, valueKey, valueLabel, icon, theme, loading, emptyMsg 
 
 export default function Scorers({ theme }) {
   const [tab, setTab] = useState('goals');
-  const [scorers, setScorers] = useState([]);
-  const [assists, setAssists] = useState([]);
-  const [loadingGoals, setLoadingGoals] = useState(true);
-  const [loadingAssists, setLoadingAssists] = useState(false);
-  const [assistsLoaded, setAssistsLoaded] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/games/bl1/scorers')
-      .then(r => r.json())
-      .then(d => { setScorers(Array.isArray(d) ? d : []); setLoadingGoals(false); })
-      .catch(() => setLoadingGoals(false));
-  }, []);
+  const scorersFetch = useFetch(() => getScorers('bl1'));
+  const assistsFetch = useFetch(() => getAssists('bl1'));
 
-  const loadAssists = () => {
-    if (assistsLoaded) return;
-    setLoadingAssists(true);
-    fetch('/api/games/bl1/assists')
-      .then(r => r.json())
-      .then(d => { setAssists(Array.isArray(d) ? d : []); setLoadingAssists(false); setAssistsLoaded(true); })
-      .catch(() => setLoadingAssists(false));
-  };
-
-  const switchTab = (t) => {
-    setTab(t);
-    if (t === 'assists') loadAssists();
-  };
+  const scorers = Array.isArray(scorersFetch.data) ? scorersFetch.data : [];
+  const assists = Array.isArray(assistsFetch.data) ? assistsFetch.data : [];
 
   return (
     <div>
-      <h2 style={{ color: theme.primary, marginBottom: '0.8rem' }}>🏆 Bundesliga 2025/26</h2>
+      <h2 style={{ color: theme.primary, marginBottom: '0.8rem' }}>🏆 Statistiken 2025/26</h2>
 
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #222', paddingBottom: '0.5rem' }}>
         {[{ id: 'goals', label: '⚽ Torjäger' }, { id: 'assists', label: '🤝 Vorlagen' }].map(t => (
-          <button key={t.id} onClick={() => switchTab(t.id)} style={{
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
             background: tab === t.id ? theme.primary : 'transparent',
             color: tab === t.id ? '#fff' : '#555',
             border: `1px solid ${tab === t.id ? theme.primary : '#333'}`,
@@ -87,15 +70,15 @@ export default function Scorers({ theme }) {
       {tab === 'goals' && (
         <RankTable
           data={scorers} valueKey='goals' valueLabel='Tore' icon='⚽'
-          theme={theme} loading={loadingGoals}
+          theme={theme} loading={scorersFetch.loading} error={scorersFetch.error} refetch={scorersFetch.refetch}
           emptyMsg='Keine Torjäger-Daten verfügbar.'
         />
       )}
       {tab === 'assists' && (
         <RankTable
           data={assists} valueKey='assists' valueLabel='Vorlagen' icon='🤝'
-          theme={theme} loading={loadingAssists}
-          emptyMsg='Keine Vorlagen-Daten verfügbar. (OpenLigaDB liefert Vorlagen wenn übermittelt)'
+          theme={theme} loading={assistsFetch.loading} error={assistsFetch.error} refetch={assistsFetch.refetch}
+          emptyMsg='Keine Vorlagen-Daten verfügbar.'
         />
       )}
     </div>

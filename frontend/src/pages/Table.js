@@ -1,21 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useFetch } from '../hooks/useFetch';
+import { getTable } from '../services/api';
+import ErrorState from '../components/ErrorState';
 
 export default function Table({ theme }) {
-  const [table, setTable] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/games/bl1/table')
-      .then(r => r.json())
-      .then(d => { setTable(Array.isArray(d) ? d : []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+  const { data, loading, error, refetch } = useFetch(() => getTable('bl1'));
+  const table = Array.isArray(data) ? data : [];
 
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '3rem' }}>⏳ Lade Tabelle...</p>;
+  if (error)   return <ErrorState message={error} onRetry={refetch} icon='📊' />;
 
   return (
     <div>
-      <h2 style={{ color: theme.primary }}>Bundesliga Tabelle 2025/26</h2>
+      <h2 style={{ color: theme.primary }}>Ligatabelle 2025/26</h2>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
         <thead>
           <tr style={{ color: '#555', borderBottom: '1px solid #222', textAlign: 'center' }}>
