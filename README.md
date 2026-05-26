@@ -1,10 +1,14 @@
 # 📊 StatNerds
 
-> Sportstatistiken für Leute, die es wirklich wissen wollen.
+> Sport-Statistiken für Leute, die es wirklich wissen wollen.
 
 ![Version](https://img.shields.io/badge/version-0.5.1-E32221?style=flat-square)
 ![Stack](https://img.shields.io/badge/stack-React%20%2B%20Node.js%20%2B%20PostgreSQL-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+
+---
+
+StatNerds ist eine **offene Sport-Statistik-Plattform** für alle, die mehr wollen als nur Endergebnisse. Aktuell mit Fokus auf **Fußball (Bundesliga)** – aber von Anfang an konzipiert für mehrere Ligen, Sportarten und Dataquellen. Wer Zahlen liebt, ist hier richtig.
 
 ---
 
@@ -28,7 +32,7 @@
 - KI-Prognose
 
 ### 📊 Tabelle
-- Bundesliga-Tabelle 2025/26
+- Aktuelle Ligatabelle
 - Vereinslogos, Punkte, Tordifferenz, Form
 - Champions-League / Abstiegs-Zonen farblich markiert
 
@@ -38,7 +42,7 @@
 - Tabs: ⚽ Torjäger / 🤝 Vorlagen – lazy loaded
 
 ### 📞 Vereinsstatistiken
-- Alle 18 Vereine als Cards
+- Alle Vereine als Cards
 - Sortierbar nach: Siege, Tore, Tordifferenz, Clean Sheets, Ø Tore/Spiel, Siegquote
 - Form-Badges letzte 5 Spiele (S/U/N)
 - Vereinslogo, Durchschnittswerte
@@ -54,7 +58,7 @@
 
 ### ⚙️ Einstellungen
 - **Lieblingsverein** → Theme passt sich automatisch an
-- 19 Vereins-Themes (Bayern, BVB, Werder, Leverkusen…) + Dark
+- Vereins-Themes + Dark Mode
 - API-Key Verwaltung (lokal in localStorage)
 - Datenbankbereinigung
 
@@ -63,6 +67,18 @@
 - Installierbar als PWA (Android & iOS)
 - Touch-optimiert (44px Targets, kein 300ms Delay)
 - iPhone Safe-Area kompatibel
+
+---
+
+## 🗺️ Roadmap: Mehr als Fußball
+
+StatNerds ist als **erweiterbare Plattform** gedacht. Geplant sind u.a.:
+
+- 🏆 Weitere Fußball-Ligen (2. Bundesliga, Champions League, Premier League, La Liga…)
+- 🏀 Basketball (NBA, BBL)
+- 🎾 Tennis
+- 🏒 Eishockey
+- 🔌 Modulares Liga-/Sportarten-System über einheitliche API-Adapter
 
 ---
 
@@ -247,5 +263,5 @@ Du musst mich nicht nennen. Aber falls du es tust, irgendwo in einem kleinen Cha
 ---
 
 <div align="center">
-  Made with ❤️ & ⚽ · <a href="https://github.com/freddykrueger88/StatNerds">GitHub</a>
+  Made with ❤️ & 🏆 · <a href="https://github.com/freddykrueger88/StatNerds">GitHub</a>
 </div>
