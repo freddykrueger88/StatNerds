@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { cleanupStats } from '../services/api';
 
-const APP_VERSION = '0.6.0';
+const APP_VERSION = process.env.REACT_APP_VERSION || '0.6.0';
 const GITHUB_URL  = 'https://github.com/freddykrueger88/StatNerds';
 
 const THEMES = [
@@ -18,7 +18,7 @@ const THEMES = [
   { name: 'Schalke 04',               primary: '#004D9D', secondary: '#FFFFFF', emoji: '🔵' },
   { name: 'HSV',                      primary: '#0B1F69', secondary: '#FFFFFF', emoji: '🔵' },
   { name: 'FC Augsburg',              primary: '#BA3733', secondary: '#FFFFFF', emoji: '🔴' },
-  { name: '1. FC Köln',              primary: '#ED1C24', secondary: '#FFFFFF', emoji: '🐐' },
+  { name: '1. FC Köln',               primary: '#ED1C24', secondary: '#FFFFFF', emoji: '🐐' },
   { name: 'FSV Mainz 05',             primary: '#C8102E', secondary: '#FFFFFF', emoji: '🔴' },
   { name: 'SC Freiburg',              primary: '#E32221', secondary: '#000000', emoji: '🔴' },
   { name: 'Union Berlin',             primary: '#EB1923', secondary: '#000000', emoji: '🔴' },
@@ -78,16 +78,21 @@ const CLEANUP_OPTIONS = [
   { label: 'Alle gespeicherten Statistiken löschen', days: 0  },
 ];
 
+// Jeder Key bekommt einen eigenen Hook – keine Hooks in Schleifen
 function useApiKeys() {
-  const hooks = API_KEY_DEFS.map(k => useLocalStorage(`sn_key_${k.id}`, ''));
-  const keys    = Object.fromEntries(API_KEY_DEFS.map((k, i) => [k.id, hooks[i][0]]));
-  const setters = Object.fromEntries(API_KEY_DEFS.map((k, i) => [k.id, hooks[i][1]]));
-  return { keys, setters };
+  const [k0, s0] = useLocalStorage('sn_key_api_football',  '');
+  const [k1, s1] = useLocalStorage('sn_key_sportsdb',      '');
+  const [k2, s2] = useLocalStorage('sn_key_football_data', '');
+  const [k3, s3] = useLocalStorage('sn_key_rapidapi',      '');
+  return {
+    keys:    { api_football: k0, sportsdb: k1, football_data: k2, rapidapi: k3 },
+    setters: { api_football: s0, sportsdb: s1, football_data: s2, rapidapi: s3 },
+  };
 }
 
 export default function Settings({ theme, setTheme }) {
   const { keys, setters }             = useApiKeys();
-  const [draftKeys, setDraftKeys]     = useState(() => Object.fromEntries(API_KEY_DEFS.map(k => [k.id, keys[k.id]])));
+  const [draftKeys, setDraftKeys]     = useState(() => ({ ...keys }));
   const [savedMsg,  setSavedMsg]      = useState({});
   const [cleanupDays, setCleanupDays] = useState(30);
   const [cleanupMsg,  setCleanupMsg]  = useState('');
@@ -95,13 +100,11 @@ export default function Settings({ theme, setTheme }) {
   const [favoriteTeam, setFavoriteTeam] = useLocalStorage('sn_favorite_team', 'Kein Favorit');
   const [favSaved, setFavSaved]       = useState(false);
 
-  const applyTheme = (t) => setTheme(t);
-
   const saveFavorite = (teamName) => {
     setFavoriteTeam(teamName);
     if (teamName !== 'Kein Favorit') {
       const matchTheme = THEMES.find(t => t.name === teamName);
-      if (matchTheme) applyTheme(matchTheme);
+      if (matchTheme) setTheme(matchTheme);
     }
     setFavSaved(true);
     setTimeout(() => setFavSaved(false), 2000);
@@ -132,6 +135,7 @@ export default function Settings({ theme, setTheme }) {
     <div style={{ maxWidth: '700px', paddingBottom: '3rem' }}>
       <h2 style={{ color: theme.primary }}>⚙️ Einstellungen</h2>
 
+      {/* Lieblingsverein */}
       <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>❤️ Mein Verein</h3>
         <span style={lbl}>Wähle deinen Lieblingsverein – das Theme passt sich automatisch an</span>
@@ -151,12 +155,13 @@ export default function Settings({ theme, setTheme }) {
         )}
       </div>
 
+      {/* Theme */}
       <div style={block}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>🎨 Theme / Vereinsfarben</h3>
         <span style={lbl}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong></span>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: '0.5rem' }}>
           {THEMES.map(t => (
-            <button key={t.name} onClick={() => applyTheme(t)} style={{
+            <button key={t.name} onClick={() => setTheme(t)} style={{
               background: theme.name === t.name ? t.primary + '22' : '#222',
               color: theme.name === t.name ? '#fff' : '#aaa',
               border: `2px solid ${theme.name === t.name ? t.primary : '#2a2a2a'}`,
@@ -168,6 +173,7 @@ export default function Settings({ theme, setTheme }) {
         </div>
       </div>
 
+      {/* API-Keys */}
       <div style={block}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>🔑 API-Keys</h3>
         <p style={{ color: '#555', fontSize: '0.8rem', margin: '0 0 1.2rem 0' }}>
@@ -201,6 +207,7 @@ export default function Settings({ theme, setTheme }) {
         ))}
       </div>
 
+      {/* Cleanup */}
       <div style={block}>
         <h3 style={{ margin: '0 0 1rem 0' }}>🗑️ Datenbankbereinigung</h3>
         <span style={lbl}>Gespeicherte Statistiken löschen um Speicherplatz freizugeben</span>
@@ -214,6 +221,7 @@ export default function Settings({ theme, setTheme }) {
         {cleanupMsg && <p style={{ color: cleanupMsg.startsWith('✅') ? '#4ade80' : '#f87171', marginTop: '0.5rem', fontSize: '0.85rem' }}>{cleanupMsg}</p>}
       </div>
 
+      {/* Datenquellen */}
       <div style={{ ...block, background: '#111', border: '1px solid #1a1a1a' }}>
         <h3 style={{ margin: '0 0 0.5rem 0' }}>ℹ️ Datenquellen</h3>
         <div style={{ fontSize: '0.82rem', color: '#555', lineHeight: '1.9' }}>
@@ -224,6 +232,7 @@ export default function Settings({ theme, setTheme }) {
         </div>
       </div>
 
+      {/* Footer */}
       <div style={{ textAlign: 'center', padding: '1.5rem 0 0.5rem 0', borderTop: '1px solid #1a1a1a', marginTop: '0.5rem' }}>
         <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: theme.primary, marginBottom: '0.3rem' }}>📊 StatNerds</div>
         <div style={{ fontSize: '0.78rem', color: '#444', marginBottom: '0.5rem' }}>Version {APP_VERSION}</div>

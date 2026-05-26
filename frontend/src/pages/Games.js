@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import GameDetail from './GameDetail';
 import { GameCardSkeleton } from '../components/Skeleton';
 import ErrorState from '../components/ErrorState';
@@ -6,35 +6,18 @@ import { useToast } from '../components/Toast';
 import { useFetch } from '../hooks/useFetch';
 import { useCountdown, formatCountdown } from '../hooks/useCountdown';
 import { useFavorites } from '../hooks/useFavorites';
-import { getCurrentGames, getGamesByDay, getMatchdays, getPrediction } from '../services/api';
+import PredictionBlock from '../components/PredictionBlock';
+import { getCurrentGames, getGamesByDay, getMatchdays } from '../services/api';
 
-// ── PredictionBar ────────────────────────────────────────────────────────────
-function PredictionBar({ home, draw, away, team1, team2 }) {
-  return (
-    <div style={{ marginTop: '0.8rem' }}>
-      <div style={{ display: 'flex', borderRadius: '6px', overflow: 'hidden', height: '22px', fontSize: '0.72rem' }}>
-        <div style={{ width: `${home}%`, background: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>{home}%</div>
-        <div style={{ width: `${draw}%`, background: '#facc15', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>{draw}%</div>
-        <div style={{ width: `${away}%`, background: '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>{away}%</div>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#666', marginTop: '3px' }}>
-        <span>🏠 {team1}</span><span>Unentschieden</span><span>{team2} ✈️</span>
-      </div>
-    </div>
-  );
-}
-
-// ── Countdown-Badge ─────────────────────────────────────────────────────────────
+// ── CountdownBadge ───────────────────────────────────────────────────────────────
 function CountdownBadge({ date }) {
   const remaining = useCountdown(date);
-  const label = formatCountdown(remaining);
+  const label     = formatCountdown(remaining);
   if (!label) return null;
-  return (
-    <span style={{ fontSize: '0.68rem', color: '#facc15', marginLeft: '0.4rem' }}>⏳ {label}</span>
-  );
+  return <span style={{ fontSize: '0.68rem', color: '#facc15', marginLeft: '0.4rem' }}>⏳ {label}</span>;
 }
 
-// ── GoalList ────────────────────────────────────────────────────────────────────
+// ── GoalList ─────────────────────────────────────────────────────────────────────
 function GoalList({ goals }) {
   if (!goals?.length) return null;
   return (
@@ -48,9 +31,8 @@ function GoalList({ goals }) {
   );
 }
 
-// ── GameCard ────────────────────────────────────────────────────────────────────
+// ── GameCard ─────────────────────────────────────────────────────────────────────
 function GameCard({ game, hero, theme, onClick }) {
-  const [pred, setPred] = useState(null);
   const { isFavorite, toggle: toggleFav } = useFavorites();
   const t1 = game.team1?.shortName || game.team1?.teamName;
   const t2 = game.team2?.shortName || game.team2?.teamName;
@@ -61,10 +43,8 @@ function GameCard({ game, hero, theme, onClick }) {
   const isUpcoming = !game.matchIsFinished && !isLive;
   const isFav   = isFavorite(game.team1?.teamId) || isFavorite(game.team2?.teamId);
 
-  useEffect(() => {
-    if (t1 && t2)
-      getPrediction(t1, t2).then(setPred).catch(() => {});
-  }, [t1, t2]);
+  // Prediction nur auf Hero-Karte laden – nicht auf allen 9 Karten gleichzeitig
+  const showPrediction = hero && !game.matchIsFinished;
 
   return (
     <div style={{
@@ -73,7 +53,6 @@ function GameCard({ game, hero, theme, onClick }) {
       marginBottom: '0.75rem', cursor: 'pointer',
       borderLeft: `4px solid ${isLive ? '#f87171' : game.matchIsFinished ? '#333' : theme.primary}`,
       outline: isFav ? `1px solid ${theme.primary}44` : 'none',
-      transition: 'opacity 0.15s'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
         {/* Favoriten-Stern */}
@@ -92,8 +71,8 @@ function GameCard({ game, hero, theme, onClick }) {
           <div style={{ fontSize: hero ? '2rem' : '1.2rem', color: '#facc15', fontWeight: 'bold' }}>
             {final ? `${final.pointsTeam1} : ${final.pointsTeam2}` : isLive ? '🔴' : 'vs'}
           </div>
-          {half && <div style={{ fontSize: '0.68rem', color: '#555' }}>HZ {half.pointsTeam1}:{half.pointsTeam2}</div>}
-          {isLive     && <div style={{ fontSize: '0.68rem', color: '#f87171' }}>● LIVE</div>}
+          {half     && <div style={{ fontSize: '0.68rem', color: '#555' }}>HZ {half.pointsTeam1}:{half.pointsTeam2}</div>}
+          {isLive   && <div style={{ fontSize: '0.68rem', color: '#f87171' }}>● LIVE</div>}
           {isUpcoming && <CountdownBadge date={game.matchDateTimeUTC} />}
         </div>
 
@@ -106,24 +85,28 @@ function GameCard({ game, hero, theme, onClick }) {
       <div onClick={() => onClick(game)} style={{ textAlign: 'center', color: '#555', fontSize: '0.72rem', marginTop: '0.3rem' }}>
         {new Date(game.matchDateTime).toLocaleString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · {game.group?.groupName}
       </div>
+
       {hero && <GoalList goals={game.goals} />}
-      {pred?.home_win !== undefined && (
-        <PredictionBar home={pred.home_win} draw={pred.draw} away={pred.away_win} team1={t1} team2={t2} />
+
+      {/* Prediction nur auf Hero-Karte, nach Bedarf geladen via PredictionBlock */}
+      {showPrediction && t1 && t2 && (
+        <PredictionBlock team1={t1} team2={t2} theme={theme} compact />
       )}
+
       <div onClick={() => onClick(game)} style={{ textAlign: 'right', fontSize: '0.68rem', color: '#333', marginTop: '0.3rem' }}>Details ›</div>
     </div>
   );
 }
 
-// ── Games (Hauptkomponente) ─────────────────────────────────────────────────────
+// ── Custom Hook: Games + Toast-Logik ───────────────────────────────────────────────
 function useGamesWithToast(matchday) {
-  const toast = useToast();
+  const toast          = useToast();
   const prevGoalCountRef = useRef(null);
 
   const fetcher = useCallback(() => {
     const fn = matchday ? () => getGamesByDay('bl1', matchday) : () => getCurrentGames('bl1');
     return fn().then(list => {
-      const games = Array.isArray(list) ? list : [];
+      const games     = Array.isArray(list) ? list : [];
       const goalCount = games.reduce((s, g) => s + (g.goals?.length || 0), 0);
       if (prevGoalCountRef.current !== null && goalCount > prevGoalCountRef.current) {
         toast(`⚽ ${goalCount - prevGoalCountRef.current} neues Tor!`, 'goal', 4000);
@@ -133,18 +116,19 @@ function useGamesWithToast(matchday) {
     });
   }, [matchday, toast]);
 
-  return useFetch(fetcher, 60000, [matchday]);
+  return useFetch(fetcher, 60_000, [matchday]);
 }
 
+// ── Games (Hauptseite) ──────────────────────────────────────────────────────────────────
 export default function Games({ theme }) {
-  const [matchday, setMatchday] = useState(null);
-  const [selected, setSelected] = useState(null);
+  const [matchday,  setMatchday]  = useState(null);
+  const [selected,  setSelected]  = useState(null);
 
   const matchdaysFetch = useFetch(() => getMatchdays('bl1'));
-  const matchdays = Array.isArray(matchdaysFetch.data) ? matchdaysFetch.data : [];
+  const matchdays      = Array.isArray(matchdaysFetch.data) ? matchdaysFetch.data : [];
 
   const { data, loading, error, refetch, lastUpdate } = useGamesWithToast(matchday);
-  const games = Array.isArray(data) ? data : [];
+  const games     = Array.isArray(data) ? data : [];
   const liveCount = games.filter(g => !g.matchIsFinished && new Date(g.matchDateTimeUTC) < new Date()).length;
 
   if (selected) return <GameDetail game={selected} theme={theme} onBack={() => setSelected(null)} />;
@@ -178,7 +162,7 @@ export default function Games({ theme }) {
         </div>
       </div>
       {games[0] && <GameCard game={games[0]} hero={true}  theme={theme} onClick={setSelected} />}
-      {games.slice(1).map((g, i) => <GameCard key={i} game={g} hero={false} theme={theme} onClick={setSelected} />)}
+      {games.slice(1).map((g, i) => <GameCard key={i} game={g}  hero={false} theme={theme} onClick={setSelected} />)}
     </div>
   );
 }
