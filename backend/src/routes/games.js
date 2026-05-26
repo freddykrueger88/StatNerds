@@ -11,9 +11,9 @@ async function loadAllMatchdays() {
   const cached = cache.get('all_matchdays_raw');
   if (cached) return cached;
 
-  const currentRes    = await axios.get(`https://api.openligadb.de/getcurrentgroup/${LEAGUE}`);
+  const currentRes     = await axios.get(`https://api.openligadb.de/getcurrentgroup/${LEAGUE}`);
   const currentMatchday = currentRes.data?.groupOrderID || 34;
-  const matchdays     = Array.from({ length: Math.min(currentMatchday, 34) }, (_, i) => i + 1);
+  const matchdays      = Array.from({ length: Math.min(currentMatchday, 34) }, (_, i) => i + 1);
 
   const responses = await Promise.all(
     matchdays.map(md =>
@@ -34,7 +34,6 @@ function buildScorerMap(matches) {
     (match.goals || []).forEach(goal => {
       if (!goal.goalGetterName?.trim()) return;
       const name = goal.goalGetterName;
-      // Eigentor-Schuütze spielt für team1 (hat ins eigene Tor geschossen)
       const team = match.team1?.shortName || match.team1?.teamName;
       if (!scorerMap[name]) scorerMap[name] = { name, team, goals: 0, penalties: 0, ownGoals: 0 };
       if (goal.isOwnGoal) scorerMap[name].ownGoals++;
@@ -117,7 +116,6 @@ router.get('/bl1/assists', async (req, res, next) => {
 });
 
 // ── GET /api/games/bl1/h2h?team1=X&team2=Y ────────────────────────────────
-// Nutzt loadAllMatchdays() – kein eigener 102-Request-Burst mehr
 router.get('/bl1/h2h', async (req, res, next) => {
   try {
     const { team1, team2 } = req.query;
@@ -129,8 +127,6 @@ router.get('/bl1/h2h', async (req, res, next) => {
 
     const q1 = team1.toLowerCase();
     const q2 = team2.toLowerCase();
-
-    // Gecachte Spieltage statt 102 parallele Requests
     const allData = await loadAllMatchdays();
 
     const relevant = allData.filter(m => {
@@ -167,3 +163,4 @@ router.get('/bl1/matchdays', async (req, res, next) => {
 });
 
 module.exports = router;
+module.exports.loadAllMatchdays = loadAllMatchdays;
