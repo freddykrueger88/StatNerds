@@ -31,24 +31,20 @@ export const getTeamStats          = (league = 'bl1')          => request(`/team
 
 // ── Prognose ──────────────────────────────────────────────────────────────────
 export const getPrediction         = (team1, team2)            => request(`/prediction?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
+export const getPredictionXG       = (fixtureId, apiKey)       => request(`/prediction/xg?fixtureId=${fixtureId}`, { headers: { 'x-api-key': apiKey } });
 
 // ── TV-Übertragung ───────────────────────────────────────────────────────────
-export const getBroadcast          = (date)                    => request(`/broadcast/${date}`);
+export const getBroadcast          = (matchDate, country = 'DE') => request(`/broadcast/${encodeURIComponent(matchDate)}?country=${country}`);
 export const getBroadcastByCountry = (matchId, country)        => request(`/broadcast/${matchId}/${country}`);
 export const getBroadcastCountries = ()                        => request('/broadcast/countries');
 
 // ── Schiedsrichter ────────────────────────────────────────────────────────────
 export const getRefereeProfile     = (name)                    => request(`/referee/profile/${encodeURIComponent(name)}`);
+export const getRefereeApif        = (fixtureId, apiKey)       => request(`/referee/apif/${fixtureId}`, { headers: { 'x-api-key': apiKey } });
 
 // ── API-Football (Key benötigt, als Header übergeben) ───────────────────────────
-export const getApiFootballStats   = (fixtureId, apiKey)       =>
-  request(`/apifootball/stats/${fixtureId}`, { headers: { 'x-api-key': apiKey } });
-export const getApiFootballFixture = (fixtureId, apiKey)       =>
-  request(`/apifootball/fixture/${fixtureId}`, { headers: { 'x-api-key': apiKey } });
+export const getApiFootballStats   = (fixtureId, apiKey)       => request(`/apifootball/stats/${fixtureId}`,   { headers: { 'x-api-key': apiKey } });
+export const getApiFootballFixture = (fixtureId, apiKey)       => request(`/apifootball/fixture/${fixtureId}`, { headers: { 'x-api-key': apiKey } });
 
 // ── Admin (benötigt x-api-key Header) ────────────────────────────────────────
-export const cleanupStats          = (days, adminKey)          =>
-  request(`/stats/cleanup?days=${days}`, {
-    method: 'DELETE',
-    headers: { 'x-api-key': adminKey }
-  });
+export const cleanupStats          = (days, adminKey)          => request(`/stats/cleanup?days=${days}`, { method: 'DELETE', headers: { 'x-api-key': adminKey } });

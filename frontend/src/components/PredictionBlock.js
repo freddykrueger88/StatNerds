@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useFetch } from '../hooks/useFetch';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { getPrediction, getPredictionXG } from '../services/api';
 
 export default function PredictionBlock({ team1, team2, fixtureId, theme }) {
-  const [pred, setPred] = useState(null);
-  const [mode, setMode] = useState('basic'); // basic | xg
-  const apiKey = localStorage.getItem('sn_key_api_football');
+  const [mode, setMode] = useState('basic');
+  const [apiKey] = useLocalStorage('sn_key_api_football', null);
 
-  useEffect(() => {
-    if (!team1 || !team2) return;
-    const url = mode === 'xg' && apiKey && fixtureId
-      ? `/api/prediction/xg?fixtureId=${fixtureId}`
-      : `/api/prediction?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`;
+  const hasXG = !!(apiKey && fixtureId);
 
-    const headers = mode === 'xg' && apiKey ? { 'x-api-key': apiKey } : {};
-    fetch(url, { headers })
-      .then(r => r.json())
-      .then(setPred)
-      .catch(() => {});
-  }, [team1, team2, fixtureId, mode, apiKey]);
+  const { data: pred } = useFetch(
+    () => {
+      if (!team1 || !team2) return Promise.resolve(null);
+      return mode === 'xg' && hasXG
+        ? getPredictionXG(fixtureId, apiKey)
+        : getPrediction(team1, team2);
+    },
+    null,
+    [team1, team2, fixtureId, mode, apiKey]
+  );
 
   if (!pred) return null;
 
@@ -24,8 +26,7 @@ export default function PredictionBlock({ team1, team2, fixtureId, theme }) {
 
   return (
     <div style={{ marginTop: '0.8rem' }}>
-      {/* Modell-Umschalter */}
-      {apiKey && fixtureId && (
+      {hasXG && (
         <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '0.5rem' }}>
           {['basic', 'xg'].map(m => (
             <button key={m} onClick={() => setMode(m)} style={{
@@ -39,10 +40,9 @@ export default function PredictionBlock({ team1, team2, fixtureId, theme }) {
         </div>
       )}
 
-      {/* Balken */}
       <div style={{ display: 'flex', borderRadius: '6px', overflow: 'hidden', height: '24px', fontSize: '0.72rem' }}>
         <div style={{ width: `${home_win}%`, background: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>{home_win}%</div>
-        <div style={{ width: `${draw}%`, background: '#facc15', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>{draw}%</div>
+        <div style={{ width: `${draw}%`,     background: '#facc15', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>{draw}%</div>
         <div style={{ width: `${away_win}%`, background: '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 'bold' }}>{away_win}%</div>
       </div>
 
@@ -52,7 +52,6 @@ export default function PredictionBlock({ team1, team2, fixtureId, theme }) {
         <span>{team2} ✈️</span>
       </div>
 
-      {/* Erwartete Tore */}
       {expected_goals_home !== undefined && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', fontSize: '0.72rem', color: '#444', marginTop: '0.3rem' }}>
           <span>xG: <strong style={{ color: '#aaa' }}>{expected_goals_home}</strong></span>

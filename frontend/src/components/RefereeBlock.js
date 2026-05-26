@@ -1,27 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useFetch } from '../hooks/useFetch';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { getRefereeProfile, getRefereeApif } from '../services/api';
 
 export default function RefereeBlock({ refereeName, fixtureId, theme }) {
-  const [profile, setProfile] = useState(null);
-  const [apifRef, setApifRef] = useState(null);
-  const apiKey = localStorage.getItem('sn_key_api_football');
+  const [apiKey] = useLocalStorage('sn_key_api_football', null);
 
-  // Profil aus eigenem Endpoint
-  useEffect(() => {
-    if (!refereeName) return;
-    fetch(`/api/referee/profile/${encodeURIComponent(refereeName)}`)
-      .then(r => r.json())
-      .then(setProfile)
-      .catch(() => {});
-  }, [refereeName]);
+  const { data: profile } = useFetch(
+    () => refereeName ? getRefereeProfile(refereeName) : Promise.resolve(null),
+    null,
+    [refereeName]
+  );
 
-  // Schiedsrichter aus API-Football
-  useEffect(() => {
-    if (!fixtureId || !apiKey) return;
-    fetch(`/api/referee/apif/${fixtureId}`, { headers: { 'x-api-key': apiKey } })
-      .then(r => r.json())
-      .then(d => { if (d.referee) setApifRef(d); })
-      .catch(() => {});
-  }, [fixtureId, apiKey]);
+  const { data: apifRef } = useFetch(
+    () => fixtureId && apiKey ? getRefereeApif(fixtureId, apiKey) : Promise.resolve(null),
+    null,
+    [fixtureId, apiKey]
+  );
 
   const displayName = apifRef?.referee || refereeName;
   if (!displayName) return null;
