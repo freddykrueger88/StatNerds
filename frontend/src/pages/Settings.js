@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { cleanupStats } from '../services/api';
 
 const APP_VERSION = '0.4.0';
-const GITHUB_URL = 'https://github.com/freddykrueger88/StatNerds';
+const GITHUB_URL  = 'https://github.com/freddykrueger88/StatNerds';
 
 const THEMES = [
-  { name: 'Bundesliga',              primary: '#E32221', secondary: '#000000', emoji: '⭐' },
-  { name: 'FC Bayern',               primary: '#ED1C24', secondary: '#FFFFFF', emoji: '🔴' },
-  { name: 'BVB Dortmund',            primary: '#FCEA10', secondary: '#000000', emoji: '🟡' },
-  { name: 'Bayer Leverkusen',        primary: '#E32221', secondary: '#000000', emoji: '🔴' },
-  { name: 'RB Leipzig',              primary: '#DD0741', secondary: '#001E62', emoji: '🔴' },
-  { name: 'Eintracht Frankfurt',     primary: '#E1000F', secondary: '#000000', emoji: '🦅' },
-  { name: 'VfB Stuttgart',           primary: '#E32221', secondary: '#FFFFFF', emoji: '🔴' },
-  { name: 'Werder Bremen',           primary: '#1D9253', secondary: '#FFFFFF', emoji: '🟢' },
+  { name: 'Bundesliga',               primary: '#E32221', secondary: '#000000', emoji: '⭐' },
+  { name: 'FC Bayern',                primary: '#ED1C24', secondary: '#FFFFFF', emoji: '🔴' },
+  { name: 'BVB Dortmund',             primary: '#FCEA10', secondary: '#000000', emoji: '🟡' },
+  { name: 'Bayer Leverkusen',         primary: '#E32221', secondary: '#000000', emoji: '🔴' },
+  { name: 'RB Leipzig',               primary: '#DD0741', secondary: '#001E62', emoji: '🔴' },
+  { name: 'Eintracht Frankfurt',      primary: '#E1000F', secondary: '#000000', emoji: '🧥' },
+  { name: 'VfB Stuttgart',            primary: '#E32221', secondary: '#FFFFFF', emoji: '🔴' },
+  { name: 'Werder Bremen',            primary: '#1D9253', secondary: '#FFFFFF', emoji: '🟢' },
   { name: 'Borussia Mönchengladbach', primary: '#00A550', secondary: '#000000', emoji: '🟢' },
-  { name: 'Schalke 04',              primary: '#004D9D', secondary: '#FFFFFF', emoji: '🔵' },
-  { name: 'HSV',                     primary: '#0B1F69', secondary: '#FFFFFF', emoji: '🔵' },
-  { name: 'FC Augsburg',             primary: '#BA3733', secondary: '#FFFFFF', emoji: '🔴' },
+  { name: 'Schalke 04',               primary: '#004D9D', secondary: '#FFFFFF', emoji: '🔵' },
+  { name: 'HSV',                      primary: '#0B1F69', secondary: '#FFFFFF', emoji: '🔵' },
+  { name: 'FC Augsburg',              primary: '#BA3733', secondary: '#FFFFFF', emoji: '🔴' },
   { name: '1. FC Köln',              primary: '#ED1C24', secondary: '#FFFFFF', emoji: '🐐' },
-  { name: 'FSV Mainz 05',            primary: '#C8102E', secondary: '#FFFFFF', emoji: '🔴' },
-  { name: 'SC Freiburg',             primary: '#E32221', secondary: '#000000', emoji: '🔴' },
-  { name: 'Union Berlin',            primary: '#EB1923', secondary: '#000000', emoji: '🔴' },
-  { name: 'VfL Bochum',              primary: '#005CA8', secondary: '#FFFFFF', emoji: '🔵' },
-  { name: 'VfL Wolfsburg',           primary: '#65B32E', secondary: '#004D93', emoji: '🟢' },
-  { name: 'Nacht (Dark)',            primary: '#6366f1', secondary: '#1e1b4b', emoji: '🌙' },
+  { name: 'FSV Mainz 05',             primary: '#C8102E', secondary: '#FFFFFF', emoji: '🔴' },
+  { name: 'SC Freiburg',              primary: '#E32221', secondary: '#000000', emoji: '🔴' },
+  { name: 'Union Berlin',             primary: '#EB1923', secondary: '#000000', emoji: '🔴' },
+  { name: 'VfL Bochum',               primary: '#005CA8', secondary: '#FFFFFF', emoji: '🔵' },
+  { name: 'VfL Wolfsburg',            primary: '#65B32E', secondary: '#004D93', emoji: '🟢' },
+  { name: 'Nacht (Dark)',             primary: '#6366f1', secondary: '#1e1b4b', emoji: '🌙' },
 ];
 
 const FAVORITE_TEAMS = [
@@ -30,7 +32,7 @@ const FAVORITE_TEAMS = [
   ...THEMES.filter(t => t.name !== 'Bundesliga' && t.name !== 'Nacht (Dark)').map(t => t.name)
 ];
 
-const API_KEYS = [
+const API_KEY_DEFS = [
   {
     id: 'api_football',
     label: 'API-Football',
@@ -70,34 +72,34 @@ const API_KEYS = [
 ];
 
 const CLEANUP_OPTIONS = [
-  { label: 'Statistiken älter als 7 Tage',  days: 7 },
-  { label: 'Statistiken älter als 14 Tage', days: 14 },
-  { label: 'Statistiken älter als 30 Tage', days: 30 },
-  { label: 'Alle gespeicherten Statistiken löschen', days: 0 },
+  { label: 'Statistiken älter als 7 Tage',            days: 7  },
+  { label: 'Statistiken älter als 14 Tage',           days: 14 },
+  { label: 'Statistiken älter als 30 Tage',           days: 30 },
+  { label: 'Alle gespeicherten Statistiken löschen',  days: 0  },
 ];
 
-export default function Settings({ theme, setTheme }) {
-  const [keys, setKeys] = useState(() => {
-    const stored = {};
-    API_KEYS.forEach(k => { stored[k.id] = localStorage.getItem(`sn_key_${k.id}`) || ''; });
-    return stored;
-  });
-  const [savedMsg, setSavedMsg] = useState({});
-  const [cleanupDays, setCleanupDays] = useState(30);
-  const [cleanupMsg, setCleanupMsg] = useState('');
-  const [favoriteTeam, setFavoriteTeam] = useState(
-    () => localStorage.getItem('sn_favorite_team') || 'Kein Favorit'
-  );
-  const [favSaved, setFavSaved] = useState(false);
+// Hook: API-Key Verwaltung für alle definierten Keys
+function useApiKeys() {
+  const hooks = API_KEY_DEFS.map(k => useLocalStorage(`sn_key_${k.id}`, ''));
+  const keys    = Object.fromEntries(API_KEY_DEFS.map((k, i) => [k.id, hooks[i][0]]));
+  const setters = Object.fromEntries(API_KEY_DEFS.map((k, i) => [k.id, hooks[i][1]]));
+  return { keys, setters };
+}
 
-  const applyTheme = (t) => {
-    setTheme(t);
-    localStorage.setItem('sn_theme', JSON.stringify(t));
-  };
+export default function Settings({ theme, setTheme }) {
+  const { keys, setters } = useApiKeys();
+  const [draftKeys,     setDraftKeys]     = useState(() => Object.fromEntries(API_KEY_DEFS.map(k => [k.id, keys[k.id]])));
+  const [savedMsg,      setSavedMsg]      = useState({});
+  const [cleanupDays,   setCleanupDays]   = useState(30);
+  const [cleanupMsg,    setCleanupMsg]    = useState('');
+  const [adminKey]                        = useLocalStorage('sn_admin_key', '');
+  const [favoriteTeam,  setFavoriteTeam]  = useLocalStorage('sn_favorite_team', 'Kein Favorit');
+  const [favSaved,      setFavSaved]      = useState(false);
+
+  const applyTheme = (t) => setTheme(t);  // useLocalStorage in App.js persistiert automatisch
 
   const saveFavorite = (teamName) => {
     setFavoriteTeam(teamName);
-    localStorage.setItem('sn_favorite_team', teamName);
     if (teamName !== 'Kein Favorit') {
       const matchTheme = THEMES.find(t => t.name === teamName);
       if (matchTheme) applyTheme(matchTheme);
@@ -107,24 +109,28 @@ export default function Settings({ theme, setTheme }) {
   };
 
   const saveKey = (id) => {
-    localStorage.setItem(`sn_key_${id}`, keys[id]);
+    setters[id](draftKeys[id]);
     setSavedMsg(prev => ({ ...prev, [id]: true }));
     setTimeout(() => setSavedMsg(prev => ({ ...prev, [id]: false })), 2000);
   };
 
   const handleCleanup = async () => {
     if (!window.confirm(`Wirklich löschen (${cleanupDays === 0 ? 'ALLE' : 'älter als ' + cleanupDays + ' Tage'})?`)) return;
-    try {
-      const r = await fetch(`/api/stats/cleanup?days=${cleanupDays}`, { method: 'DELETE' });
-      const d = await r.json();
-      setCleanupMsg(`✅ ${d.deleted} Einträge gelöscht.`);
-    } catch {
-      setCleanupMsg('❌ Fehler beim Löschen.');
+    if (!adminKey) {
+      setCleanupMsg('❌ Kein Admin-Key konfiguriert (Einstellungen → Admin-Key).');
+      return;
     }
+    try {
+      const d = await cleanupStats(cleanupDays, adminKey);
+      setCleanupMsg(`✅ ${d.deleted} Einträge gelöscht.`);
+    } catch (e) {
+      setCleanupMsg(`❌ Fehler: ${e.message}`);
+    }
+    setTimeout(() => setCleanupMsg(''), 5000);
   };
 
   const block = { background: '#1a1a1a', borderRadius: '10px', padding: '1.5rem', marginBottom: '1.5rem' };
-  const label = { color: '#888', fontSize: '0.8rem', marginBottom: '0.5rem', display: 'block' };
+  const lbl   = { color: '#888', fontSize: '0.8rem', marginBottom: '0.5rem', display: 'block' };
 
   return (
     <div style={{ maxWidth: '700px', paddingBottom: '3rem' }}>
@@ -133,22 +139,12 @@ export default function Settings({ theme, setTheme }) {
       {/* Favoriten-Team */}
       <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>❤️ Mein Verein</h3>
-        <span style={label}>Wähle deinen Lieblingsverein – das Theme passt sich automatisch an</span>
+        <span style={lbl}>Wähle deinen Lieblingsverein – das Theme passt sich automatisch an</span>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <select
-            value={favoriteTeam}
-            onChange={e => saveFavorite(e.target.value)}
-            style={{
-              flex: 1, background: '#111', color: '#fff',
-              border: `1px solid ${theme.primary}44`,
-              borderRadius: '8px', padding: '0.6rem 0.8rem',
-              fontSize: '0.95rem', cursor: 'pointer'
-            }}
-          >
+          <select value={favoriteTeam} onChange={e => saveFavorite(e.target.value)}
+            style={{ flex: 1, background: '#111', color: '#fff', border: `1px solid ${theme.primary}44`, borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.95rem', cursor: 'pointer' }}>
             {FAVORITE_TEAMS.map(t => (
-              <option key={t} value={t}>
-                {THEMES.find(th => th.name === t)?.emoji || '⚽'} {t}
-              </option>
+              <option key={t} value={t}>{THEMES.find(th => th.name === t)?.emoji || '⚽'} {t}</option>
             ))}
           </select>
           {favSaved && <span style={{ color: '#4ade80', fontSize: '0.85rem' }}>✅ Gespeichert!</span>}
@@ -163,7 +159,7 @@ export default function Settings({ theme, setTheme }) {
       {/* Theme */}
       <div style={block}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>🎨 Theme / Vereinsfarben</h3>
-        <span style={label}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong></span>
+        <span style={lbl}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong></span>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: '0.5rem' }}>
           {THEMES.map(t => (
             <button key={t.name} onClick={() => applyTheme(t)} style={{
@@ -174,8 +170,7 @@ export default function Settings({ theme, setTheme }) {
               fontWeight: theme.name === t.name ? 'bold' : 'normal',
               fontSize: '0.82rem', textAlign: 'left', transition: 'all 0.15s'
             }}>
-              <span style={{ marginRight: '6px' }}>{t.emoji}</span>
-              {t.name}
+              <span style={{ marginRight: '6px' }}>{t.emoji}</span>{t.name}
             </button>
           ))}
         </div>
@@ -187,7 +182,7 @@ export default function Settings({ theme, setTheme }) {
         <p style={{ color: '#555', fontSize: '0.8rem', margin: '0 0 1.2rem 0' }}>
           Alle Keys werden nur lokal in deinem Browser gespeichert (localStorage) – nie auf dem Server.
         </p>
-        {API_KEYS.map(api => (
+        {API_KEY_DEFS.map(api => (
           <div key={api.id} style={{ marginBottom: '1.2rem', paddingBottom: '1.2rem', borderBottom: '1px solid #222' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
               <div>
@@ -200,12 +195,11 @@ export default function Settings({ theme, setTheme }) {
             </div>
             <p style={{ color: '#555', fontSize: '0.75rem', margin: '0 0 0.5rem 0' }}>{api.description}</p>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type='password'
-                value={keys[api.id]}
-                onChange={e => setKeys(prev => ({ ...prev, [api.id]: e.target.value }))}
+              <input type='password'
+                value={draftKeys[api.id]}
+                onChange={e => setDraftKeys(prev => ({ ...prev, [api.id]: e.target.value }))}
                 placeholder={api.placeholder}
-                style={{ flex: 1, background: '#111', color: '#fff', border: `1px solid ${keys[api.id] ? '#4ade8044' : '#333'}`, borderRadius: '6px', padding: '0.45rem 0.8rem', fontSize: '0.85rem' }}
+                style={{ flex: 1, background: '#111', color: '#fff', border: `1px solid ${draftKeys[api.id] ? '#4ade8044' : '#333'}`, borderRadius: '6px', padding: '0.45rem 0.8rem', fontSize: '0.85rem' }}
               />
               <button onClick={() => saveKey(api.id)} style={{
                 background: savedMsg[api.id] ? '#14532d' : theme.primary,
@@ -223,7 +217,7 @@ export default function Settings({ theme, setTheme }) {
       {/* Datenbankbereinigung */}
       <div style={block}>
         <h3 style={{ margin: '0 0 1rem 0' }}>🗑️ Datenbankbereinigung</h3>
-        <span style={label}>Gespeicherte Statistiken löschen um Speicherplatz freizugeben</span>
+        <span style={lbl}>Gespeicherte Statistiken löschen um Speicherplatz freizugeben</span>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <select value={cleanupDays} onChange={e => setCleanupDays(Number(e.target.value))}
             style={{ background: '#111', color: '#fff', border: '1px solid #333', borderRadius: '6px', padding: '0.5rem 0.8rem', fontSize: '0.9rem', flex: 1 }}>
@@ -231,7 +225,7 @@ export default function Settings({ theme, setTheme }) {
           </select>
           <button onClick={handleCleanup} style={{ background: '#991b1b', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: 'bold' }}>Löschen</button>
         </div>
-        {cleanupMsg && <p style={{ color: '#4ade80', marginTop: '0.5rem', fontSize: '0.85rem' }}>{cleanupMsg}</p>}
+        {cleanupMsg && <p style={{ color: cleanupMsg.startsWith('✅') ? '#4ade80' : '#f87171', marginTop: '0.5rem', fontSize: '0.85rem' }}>{cleanupMsg}</p>}
       </div>
 
       {/* Datenquellen */}
@@ -247,12 +241,8 @@ export default function Settings({ theme, setTheme }) {
 
       {/* App Info Footer */}
       <div style={{ textAlign: 'center', padding: '1.5rem 0 0.5rem 0', borderTop: '1px solid #1a1a1a', marginTop: '0.5rem' }}>
-        <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: theme.primary, marginBottom: '0.3rem' }}>
-          📊 StatNerds
-        </div>
-        <div style={{ fontSize: '0.78rem', color: '#444', marginBottom: '0.5rem' }}>
-          Version {APP_VERSION}
-        </div>
+        <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: theme.primary, marginBottom: '0.3rem' }}>📊 StatNerds</div>
+        <div style={{ fontSize: '0.78rem', color: '#444', marginBottom: '0.5rem' }}>Version {APP_VERSION}</div>
         <a href={GITHUB_URL} target='_blank' rel='noreferrer'
           style={{ fontSize: '0.78rem', color: '#555', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
           <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor'>
