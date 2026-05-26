@@ -1,71 +1,60 @@
 require('dotenv').config();
 const express = require('express');
-const { Pool } = require('pg');
-const cors = require('cors');
-const cache = require('./cache');
-const startScheduler = require('./scheduler');
+const cors    = require('cors');
+const cache   = require('./cache');
+const startScheduler       = require('./scheduler');
 const { globalErrorHandler } = require('./middleware/errorHandler');
 const { apiLimiter, cleanupLimiter } = require('./middleware/rateLimiter');
-const { requireApiKey } = require('./middleware/requireApiKey');
+const { requireApiKey }    = require('./middleware/requireApiKey');
+
+const VERSION = '0.6.0';
+const PORT    = process.env.PORT || 8000;
 
 const app = express();
-const PORT = process.env.PORT || 8000;
 
-// CORS: nur erlaubte Origins zulassen
+// ── CORS ────────────────────────────────────────────────────────────────────
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:3000'];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Requests ohne Origin (z.B. curl, Postman) in dev erlauben
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS: Origin ${origin} nicht erlaubt.`));
-    }
+    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+    else callback(new Error(`CORS: Origin ${origin} nicht erlaubt.`));
   },
   methods: ['GET', 'POST', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'x-api-key']
+  allowedHeaders: ['Content-Type', 'x-api-key'],
 }));
 
 app.use(express.json());
-
-// Rate-Limiting auf alle Routen
 app.use(apiLimiter);
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', version: '0.5.1', timestamp: new Date().toISOString(), cache: cache.stats() });
+// ── Health ──────────────────────────────────────────────────────────────────
+app.get('/api/health', (req, res) => {
+  res.json({
+    status:    'OK',
+    version:   VERSION,
+    timestamp: new Date().toISOString(),
+    cache:     cache.stats(),
+  });
 });
 
-// Routen
-app.use('/games',       require('./routes/games'));
-app.use('/teams',       require('./routes/teams'));
-app.use('/teamstats',   require('./routes/teamstats'));
-app.use('/prediction',  require('./routes/prediction'));
-app.use('/apifootball', require('./routes/apifootball'));
-app.use('/broadcast',   require('./routes/broadcast').router);
-app.use('/referee',     require('./routes/referee'));
+// ── Routen ──────────────────────────────────────────────────────────────────
+app.use('/api/games',       require('./routes/games'));
+app.use('/api/teams',       require('./routes/teams'));
+app.use('/api/teamstats',   require('./routes/teamstats'));
+app.use('/api/prediction',  require('./routes/prediction'));
+app.use('/api/apifootball', require('./routes/apifootball'));
+app.use('/api/broadcast',   require('./routes/broadcast').router);
+app.use('/api/referee',     require('./routes/referee'));
+app.use('/api/stats',       require('./routes/stats'));
 
-// Cleanup – geschützt durch API-Key + strenges Rate-Limit
-app.delete('/stats/cleanup', cleanupLimiter, requireApiKey, async (req, res) => {
-  const { days } = req.query;
-  try {
-    let result;
-    if (parseInt(days) === 0) result = await pool.query('DELETE FROM stats');
-    else result = await pool.query(`DELETE FROM stats WHERE updated_at < NOW() - INTERVAL '1 day' * $1`, [parseInt(days) || 30]);
-    res.json({ deleted: result.rowCount });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
+// ── Globaler Error-Handler ──────────────────────────────────────────────────
 app.use(globalErrorHandler);
 
+// ── Start ───────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n📊 StatNerds Backend v0.5.1 → http://localhost:${PORT}`);
-  console.log(`🔒 CORS erlaubte Origins: ${allowedOrigins.join(', ')}`);
+  console.log(`\n📊 StatNerds Backend v${VERSION} → http://localhost:${PORT}`);
+  console.log(`🔒 CORS: ${allowedOrigins.join(', ')}`);
   startScheduler(cache);
 });

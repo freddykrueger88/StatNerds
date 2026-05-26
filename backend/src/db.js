@@ -1,7 +1,15 @@
-const { PrismaClient } = require('@prisma/client');
+const { Pool } = require('pg');
 
-const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error'],
+// Einziger geteilter PostgreSQL-Pool für die gesamte App
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,
 });
 
-module.exports = prisma;
+pool.on('error', (err) => {
+  console.error('❌ PostgreSQL Pool Fehler:', err.message);
+});
+
+module.exports = pool;
