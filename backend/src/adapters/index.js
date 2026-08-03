@@ -2,6 +2,7 @@
 
 const BundesligaAdapter      = require('./football/BundesligaAdapter');
 const ChampionsLeagueAdapter = require('./football/ChampionsLeagueAdapter');
+const PremierLeagueAdapter   = require('./football/PremierLeagueAdapter');
 
 /**
  * Adapter-Registry.
@@ -9,14 +10,16 @@ const ChampionsLeagueAdapter = require('./football/ChampionsLeagueAdapter');
  * Neue Ligen einfach hier eintragen und Adapter-Datei anlegen.
  */
 const REGISTRY = {
-  'bundesliga':      BundesligaAdapter,
+  'bundesliga':       BundesligaAdapter,
   'champions-league': ChampionsLeagueAdapter,
-  // 'premier-league': PremierLeagueAdapter,  // kommt mit Issue #4
+  'premier-league':   PremierLeagueAdapter,
+  // 'nba':            NBAAdapter,         // kommt mit Issue #5
+  // 'tennis-atp':     TennisAdapter,      // kommt mit Issue #6
 };
 
 /**
  * Gibt eine Adapter-Instanz zurück.
- * @param {string} league  – z.B. 'bundesliga' oder 'champions-league'
+ * @param {string} league  – z.B. 'bundesliga', 'premier-league'
  * @param {import('axios').AxiosInstance} apiClient
  * @returns {import('./BaseAdapter')}
  */
