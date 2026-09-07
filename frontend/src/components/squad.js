@@ -1,7 +1,8 @@
 import React from 'react';
 import { useFetch } from '../hooks/useFetch';
-import { getApiFootballSquad, getApiFootballPlayer } from '../services/api';
+import { getApiFootballSquad, getApiFootballPlayer, getApiFootballHeatmap } from '../services/api';
 import ErrorState from './ErrorState';
+import HeatmapField from './HeatmapField';
 
 // API-Football-Zuordnung der Bundesliga-Ligen (Registry-Name + Liga-ID)
 export const APIF = {
@@ -187,6 +188,36 @@ export function PlayerDetail({ player, theme, onBack, apiKey, aph }) {
             </div>
           )}
         </div>
+      )}
+
+      <PlayerHeatmap playerId={p.id} name={p.name} apiKey={apiKey} aph={aph} theme={theme} />
+    </div>
+  );
+}
+
+function PlayerHeatmap({ playerId, name, apiKey, aph, theme }) {
+  const isBundesliga = aph?.league === 'bundesliga';
+  const heatFetch = useFetch(
+    () => (isBundesliga && playerId && apiKey)
+      ? getApiFootballHeatmap(playerId, aph.league, apiKey, name)
+      : Promise.resolve(null),
+    null,
+    [playerId, apiKey, aph?.league, name]
+  );
+  const heat = heatFetch.data;
+
+  if (!isBundesliga) return null;
+
+  return (
+    <div style={{ background: '#1a1a1a', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }}>
+      <h4 style={{ margin: '0 0 0.6rem', fontSize: '0.85rem', color: '#aaa' }}>🗺️ Positions-Heatmap</h4>
+      {!apiKey && <p style={{ color: '#666', fontSize: '0.78rem' }}>🔑 API-Football-Key erforderlich (⚙️ Einstellungen).</p>}
+      {apiKey && heatFetch.loading && <p style={{ color: '#555', fontSize: '0.8rem' }}>⏳ Lade Heatmap...</p>}
+      {apiKey && heatFetch.error && <ErrorState message={heatFetch.error} onRetry={heatFetch.refetch} icon='🗺️' />}
+      {apiKey && !heatFetch.loading && !heatFetch.error && heat && (
+        heat.points?.length
+          ? <HeatmapField team={heat.team} name={heat.name} points={heat.points} theme={theme} />
+          : <p style={{ color: '#555', fontSize: '0.78rem' }}>Keine Heatmap-Daten zu diesem Spieler verfügbar (noch kein Einsatz in beendeten Spielen).</p>
       )}
     </div>
   );

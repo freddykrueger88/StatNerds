@@ -96,6 +96,26 @@ router.get('/:league/search', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── GET /api/apifootball/:league/heatmap/:playerId ─────────────────────
+// Positions-Heatmap eines Spielers (Issue #22). Startelf-Gitter-Koordinaten
+// der letzten Spiele des Teams → als Dichte-Overlay zeichenbar.
+router.get('/:league/heatmap/:playerId', async (req, res, next) => {
+  const adapter = resolveAdapter(req, res);
+  if (!adapter) return;
+  if (typeof adapter.getHeatmap !== 'function') {
+    return res.status(400).json({ error: 'Heatmaps sind nur für Bundesliga-Ligen verfügbar' });
+  }
+  const { playerId, league } = req.params;
+  const cacheKey = `apif_${league}_heatmap_${playerId}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return res.json(cached);
+  try {
+    const data = await adapter.getHeatmap(playerId, req.query.name);
+    cache.set(cacheKey, data, 12 * 60 * 60 * 1000);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
 // ── GET /api/apifootball/:league/live ──────────────────────────────────
 router.get('/:league/live', async (req, res, next) => {
   const adapter = resolveAdapter(req, res);

@@ -39,7 +39,7 @@ class BundesligaAdapter extends BaseAdapter {
       birthDate: p.player?.birth?.date, birthPlace: p.player?.birth?.place,
       nationality: p.player?.nationality, position: p.player?.position,
       height: p.player?.height, weight: p.player?.weight,
-      team: s.team?.name, number: s.games?.number ?? null,
+      team: s.team?.name, teamId: s.team?.id, number: s.games?.number ?? null,
       games: s.games?.appearences ?? null, minutes: s.games?.minutes ?? null,
       goals: s.goals?.total ?? null, assists: s.goals?.assists ?? null,
       yellowCards: s.cards?.yellow ?? null, redCards: s.cards?.red ?? null,
@@ -115,6 +115,43 @@ class BundesligaAdapter extends BaseAdapter {
       venue:     { name: f.fixture?.venue?.name, city: f.fixture?.venue?.city },
       broadcast: f.fixture?.periods || [],
     };
+  }
+
+  // ── getHeatmap (Issue #22) ────────────────────────────────────────────────
+  // Positions-Heatmap eines Spielers: echte Startelf-Koordinaten (grid) aus
+  // den Aufstellungen der letzten beendeten Spiele seines Teams. API-Football
+  // liefert pro Spieler pro Spiel eine Position im Raster (z.B. "3:7" →
+  // Zeile:Spalte), die wir auf Spielfeld-Prozentkoordinaten mappen. Jeder
+  // Auftritt erzeugt 1 Heatpoint; mehrere Spiele bilden die Dichte.
+  // grid→Feld: Zeile 1 = Torwart (y≈8%), letzte Zeile = Sturm (y≈92%),
+  // Spalten quadratisch über die Breite (y wird zusätzlich leicht zufällig
+  // gestreut, um eine realistische "Heat"-Fläche statt Einzelpunkten zu zeigen).
+  async getHeatmap(playerId, playername) {
+    const pl = await this.getPlayer(playerId);
+    if (!pl?.teamId) return { playerId, name: playername || pl?.name || null, team: pl?.team, points: [] };
+
+    const sched   = await this.getSchedule().catch(() => []);
+    const finished = (sched || []).filter(f => f.fixtureId && f.status === 'FT' && (f.homeScore != null || f.awayScore != null));
+    const last    = finished.slice(-8);
+
+    const points = [];
+    for (const f of last) {
+      const lr = await this.client.get(`/fixtures/lineups?fixture=${f.fixtureId}`).catch(() => null);
+      const lineup = (lr?.data?.response || []).find(l => l.team?.id === pl.teamId);
+      if (!lineup) continue;
+      const both = [...(lineup.startXI || []), ...(lineup.substitutes || [])];
+      const slot = both.find(s => String(s.player?.id) === String(playerId));
+      if (!slot?.grid) continue;
+      const [row, col] = String(slot.grid).split(':').map(Number);
+      if (!row || !col) continue;
+      const rows = lineup.formation ? lineup.formation.split('-').length + 1 : 6;
+      const cols = Math.max(4, Number(lineup.formation?.split('-')[0]) || 4);
+      const y = 8 + ((row - 1) / rows) * 84;
+      const spread = (Math.sin((f.fixtureId * 1.7) + playerId) + 1) / 2; // deterministisch, kein Zufall pro Anfrage
+      const x = (col - 1.5) * (88 / (cols - 1)) + 6 + (spread - 0.5) * 4;
+      points.push({ x, y, minute: 90, fixtureId: f.fixtureId, status: f.status });
+    }
+    return { playerId, name: playername || pl?.name || null, team: pl?.team, teamId: pl.teamId, points };
   }
 }
 

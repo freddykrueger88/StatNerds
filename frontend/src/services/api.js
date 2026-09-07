@@ -94,6 +94,7 @@ export const getApiFootballTeams   = (league, apiKey, leagueId)          => requ
 export const getApiFootballSquad   = (teamId, league, apiKey)            => request(`/apifootball/${league}/squad/${teamId}`,              { headers: { 'x-api-key': apiKey } });
 export const getApiFootballPlayer  = (playerId, league, apiKey)          => request(`/apifootball/${league}/player/${playerId}`,            { headers: { 'x-api-key': apiKey } });
 export const getApiFootballPlayerSearch = (q, league, apiKey, leagueId)  => request(`/apifootball/${league}/search?q=${encodeURIComponent(q)}${leagueId ? `&leagueId=${leagueId}` : ''}`, { headers: { 'x-api-key': apiKey } });
+export const getApiFootballHeatmap = (playerId, league, apiKey, name)   => request(`/apifootball/${league}/heatmap/${playerId}${name ? `?name=${encodeURIComponent(name)}` : ''}`, { headers: { 'x-api-key': apiKey } });
 
 // ── Admin (benötigt x-api-key Header) ──────────────────────────────────────────────
 export const cleanupStats          = (days, adminKey)            => request(`/stats/cleanup?days=${days}`, { method: 'DELETE', headers: { 'x-api-key': adminKey } });
