@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useFetch } from '../hooks/useFetch';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useLeagueSeason } from '../hooks/useLeagueSeason';
-import { getScorers, getAssists } from '../services/api';
+import { getScorers, getAssists, getApiFootballPlayerSearch } from '../services/api';
 import ErrorState from '../components/ErrorState';
 import LeagueUnavailable from '../components/LeagueUnavailable';
 import CsvButton from '../components/CsvButton';
 import PdfButton from '../components/PdfButton';
+import { PlayerDetail, APIF } from '../components/squad';
 import { leagueLabel, leagueSource, seasonLabel } from '../leagues';
 
 const GOAL_COLUMNS = [
@@ -23,7 +25,7 @@ const ASSIST_COLUMNS = [
   { key: 'assists',  label: 'Vorlagen' },
 ];
 
-function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, refetch, emptyMsg }) {
+function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, refetch, emptyMsg, onPlayerClick, linkable }) {
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '2rem' }}>⏳ Lade...</p>;
   if (error)   return <ErrorState message={error} onRetry={refetch} icon={icon} />;
   if (!data.length) return <p style={{ color: '#555', textAlign: 'center', marginTop: '2rem' }}>{emptyMsg}</p>;
@@ -50,7 +52,14 @@ function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, re
             <td style={{ padding: '0.5rem 0.5rem 0.5rem 0.8rem', color: '#555', fontWeight: 'bold', fontSize: '0.85rem' }}>
               {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
             </td>
-            <td style={{ padding: '0.5rem', fontWeight: i < 3 ? 'bold' : 'normal', color: i < 3 ? '#fff' : '#ccc' }}>{s.name}</td>
+            <td style={{ padding: '0.5rem', fontWeight: i < 3 ? 'bold' : 'normal', color: i < 3 ? '#fff' : '#ccc' }}>
+              {linkable
+                ? <button onClick={() => onPlayerClick(s.name)} title='Spielerprofil öffnen' style={{
+                    background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+                    color: 'inherit', fontWeight: 'inherit', fontSize: 'inherit', textAlign: 'left',
+                  }}>{s.name}</button>
+                : s.name}
+            </td>
             <td style={{ padding: '0.5rem', color: '#666', fontSize: '0.8rem' }}>{s.team}</td>
             <td style={{ textAlign: 'center', fontWeight: 'bold', color: theme.primary, fontSize: '1.15rem', padding: '0.5rem' }}>{s[valueKey]}</td>
             {valueKey === 'goals' && <td style={{ textAlign: 'center', color: '#666', fontSize: '0.85rem' }}>{s.penalties || 0}</td>}
@@ -64,6 +73,12 @@ function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, re
 
 export default function Scorers({ theme, league }) {
   const [tab, setTab] = useState('goals');
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [searchResult, setSearchResult] = useState(null);
+
+  const [apiKey] = useLocalStorage('sn_key_api_football', '');
+  const aph = APIF[league] || APIF.bl1;
+  const useApi = !!apiKey;
 
   // Lazy: nur den aktiven Tab fetchen
   const scorersFetch = useFetch(() => getScorers(league),  null, [tab === 'goals', league]);
@@ -74,6 +89,51 @@ export default function Scorers({ theme, league }) {
   const season  = useLeagueSeason(league);
 
   if (leagueSource(league) !== 'openligadb') return <LeagueUnavailable league={league} />;
+
+  const openPlayerSearch = async name => {
+    if (!useApi) return;
+    setSelectedPlayer({ name, searching: true });
+    try {
+      const res = await getApiFootballPlayerSearch(name, aph.league, apiKey, aph.leagueId);
+      const list = Array.isArray(res) ? res : [];
+      const exact = list.find(p => (p.name || '').toLowerCase() === name.toLowerCase()) || list[0];
+      if (exact) setSelectedPlayer({ ...exact });
+      else setSearchResult('notfound');
+    } catch (e) {
+      setSearchResult('error');
+    }
+  };
+
+  const closePlayer = () => { setSelectedPlayer(null); setSearchResult(null); };
+
+  if (selectedPlayer && !selectedPlayer.searching) {
+    return (
+      <PlayerDetail player={selectedPlayer} theme={theme} apiKey={apiKey} aph={aph}
+        onBack={closePlayer} />
+    );
+  }
+  if (selectedPlayer && selectedPlayer.searching) {
+    return (
+      <div>
+        <button onClick={closePlayer} style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}`, borderRadius: '6px', padding: '0.3rem 0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>← Zurück</button>
+        <p style={{ color: '#666', textAlign: 'center', marginTop: '2rem' }}>⏳ Suche Spielerprofil...</p>
+      </div>
+    );
+  }
+  if (searchResult) {
+    const msg = searchResult === 'notfound'
+      ? 'Kein Spielerprofil zu diesem Namen gefunden.'
+      : 'Spielerprofil konnte nicht geladen werden.';
+    return (
+      <div>
+        <button onClick={closePlayer} style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}`, borderRadius: '6px', padding: '0.3rem 0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>← Zurück</button>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🙍‍♂️</div>
+          <p style={{ color: '#555' }}>{msg}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -94,6 +154,11 @@ export default function Scorers({ theme, league }) {
           </>
         }
       </div>
+      {!useApi && (
+        <p style={{ fontSize: '0.72rem', color: '#444', marginTop: '-0.4rem', marginBottom: '0.6rem' }}>
+          💡 Mit einem API-Football-Key sind die Spielernamen klickbar und öffnen das Spielerprofil.
+        </p>
+      )}
       {!season.isCurrent && (
         <p style={{ fontSize: '0.75rem', color: '#dca500', background: '#1f1c0e', border: '1px solid #3a3314', borderRadius: '8px', padding: '0.5rem 0.8rem', marginBottom: '1rem' }}>
           ⚠️ Für diese Liga ist in der Datenquelle noch keine Saison {seasonLabel()} verfügbar – angezeigt wird die letzte abgeschlossene Saison <strong>{season.label}</strong>. Sobald die neue Saison beginnt, erscheint sie hier automatisch.
@@ -118,6 +183,7 @@ export default function Scorers({ theme, league }) {
           data={scorers} valueKey='goals' valueLabel='Tore' icon='⚽'
           theme={theme} loading={scorersFetch.loading} error={scorersFetch.error} refetch={scorersFetch.refetch}
           emptyMsg='Keine Torjäger-Daten verfügbar.'
+          onPlayerClick={openPlayerSearch} linkable={useApi}
         />
       )}
       {tab === 'assists' && (
@@ -125,6 +191,7 @@ export default function Scorers({ theme, league }) {
           data={assists} valueKey='assists' valueLabel='Vorlagen' icon='🤝'
           theme={theme} loading={assistsFetch.loading} error={assistsFetch.error} refetch={assistsFetch.refetch}
           emptyMsg='Keine Vorlagen-Daten verfügbar.'
+          onPlayerClick={openPlayerSearch} linkable={useApi}
         />
       )}
     </div>

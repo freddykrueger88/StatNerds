@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import StatsBar from '../components/StatsBar';
 import PredictionBlock from '../components/PredictionBlock';
 import BroadcastBadge from '../components/BroadcastBadge';
@@ -7,7 +7,8 @@ import ErrorState from '../components/ErrorState';
 import { useFetch } from '../hooks/useFetch';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useToast } from '../components/Toast';
-import { getH2H, getApiFootballStats } from '../services/api';
+import { PlayerDetail, APIF } from '../components/squad';
+import { getH2H, getApiFootballStats, getApiFootballPlayerSearch } from '../services/api';
 
 function ShareButton({ game, theme }) {
   const toast = useToast();
@@ -42,7 +43,7 @@ function ShareButton({ game, theme }) {
   );
 }
 
-function Timeline({ events }) {
+function Timeline({ events, onPlayerClick }) {
   if (!events?.length) return null;
   return (
     <div style={{ marginTop: '1rem' }}>
@@ -52,14 +53,20 @@ function Timeline({ events }) {
         const icon = e.type === 'Goal'  ? (e.detail === 'Penalty' ? '🔵' : '⚽') :
                      e.type === 'Card'  ? (e.detail === 'Yellow Card' ? '🟨' : '🟥') :
                      e.type === 'subst' ? '🔄' : 'ℹ️';
+        const nameEl = e.player?.id && onPlayerClick
+          ? <button onClick={() => onPlayerClick(e.player.id, e.player.name)} title='Spielerprofil öffnen' style={{
+              background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+              color: 'inherit', fontSize: 'inherit',
+            }}>{e.player.name}</button>
+          : e.player?.name;
         return (
           <div key={i} style={{
             display: 'flex', alignItems: 'center', gap: '0.5rem',
             justifyContent: isHome ? 'flex-start' : 'flex-end',
             marginBottom: '0.3rem', fontSize: '0.78rem'
           }}>
-            {isHome  && <><span style={{ color: '#555', minWidth: '30px' }}>{e.time?.elapsed}'</span><span>{icon}</span><span style={{ color: '#ddd' }}>{e.player?.name}</span></>}
-            {!isHome && <><span style={{ color: '#ddd' }}>{e.player?.name}</span><span>{icon}</span><span style={{ color: '#555', minWidth: '30px', textAlign: 'right' }}>{e.time?.elapsed}'</span></>}
+            {isHome  && <><span style={{ color: '#555', minWidth: '30px' }}>{e.time?.elapsed}'</span><span>{icon}</span><span style={{ color: '#ddd' }}>{nameEl}</span></>}
+            {!isHome && <><span style={{ color: '#ddd' }}>{nameEl}</span><span>{icon}</span><span style={{ color: '#555', minWidth: '30px', textAlign: 'right' }}>{e.time?.elapsed}'</span></>}
           </div>
         );
       })}
@@ -95,6 +102,9 @@ function H2HSection({ team1, team2, league, theme }) {
 
 export default function GameDetail({ game, league, theme, onBack }) {
   const [apiKey] = useLocalStorage('sn_key_api_football', '');
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [playerError, setPlayerError] = useState(null);
+  const aph = APIF[league] || APIF.bl1;
 
   const t1 = game.team1?.shortName || game.team1?.teamName;
   const t2 = game.team2?.shortName || game.team2?.teamName;
@@ -110,6 +120,43 @@ export default function GameDetail({ game, league, theme, onBack }) {
   );
 
   const block = { background: '#1a1a1a', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' };
+
+  const openPlayer = async (id, name, searchName) => {
+    if (id) { setSelectedPlayer({ id, name }); return; }
+    if (!apiKey || !searchName) return;
+    try {
+      const res = await getApiFootballPlayerSearch(searchName, aph.league, apiKey, aph.leagueId);
+      const list = Array.isArray(res) ? res : [];
+      const exact = list.find(p => (p.name || '').toLowerCase() === searchName.toLowerCase()) || list[0];
+      if (exact) setSelectedPlayer({ ...exact });
+      else setPlayerError('notfound');
+    } catch (e) {
+      setPlayerError('error');
+    }
+  };
+
+  const closePlayer = () => { setSelectedPlayer(null); setPlayerError(null); };
+
+  if (selectedPlayer) {
+    return (
+      <PlayerDetail player={selectedPlayer} theme={theme} apiKey={apiKey} aph={aph}
+        onBack={closePlayer} />
+    );
+  }
+  if (playerError) {
+    const msg = playerError === 'notfound'
+      ? 'Kein Spielerprofil zu diesem Namen gefunden.'
+      : 'Spielerprofil konnte nicht geladen werden.';
+    return (
+      <div>
+        <button onClick={closePlayer} style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}`, borderRadius: '6px', padding: '0.3rem 0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>← Zurück</button>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🙍‍♂️</div>
+          <p style={{ color: '#555' }}>{msg}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -142,7 +189,12 @@ export default function GameDetail({ game, league, theme, onBack }) {
         {game.goals?.length > 0 && (
           <div style={{ marginTop: '1rem', fontSize: '0.78rem', color: '#666', lineHeight: '1.8' }}>
             {game.goals.map((g, i) => (
-              <span key={i} style={{ marginRight: '1rem' }}>⚽ {g.goalGetterName} {g.matchMinute}'{g.isPenalty ? ' [P]' : ''}{g.isOwnGoal ? ' [ET]' : ''}</span>
+              <span key={i} style={{ marginRight: '1rem' }}>
+                {apiKey
+                  ? <button onClick={() => openPlayer(null, null, g.goalGetterName)} title='Spielerprofil öffnen' style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', color: '#8ab4ff', fontSize: 'inherit' }}>{g.goalGetterName}</button>
+                  : <span>{g.goalGetterName}</span>}
+                {' '}{g.matchMinute}'{g.isPenalty ? ' [P]' : ''}{g.isOwnGoal ? ' [ET]' : ''}
+              </span>
             ))}
           </div>
         )}
@@ -178,7 +230,7 @@ export default function GameDetail({ game, league, theme, onBack }) {
                 <StatsBar label='🟥 Rot'          home={stats.home?.redCards}     away={stats.away?.redCards}      homeColor='#f87171' />
                 <StatsBar label='Pässe'           home={stats.home?.passes}        away={stats.away?.passes}        homeColor={theme.primary} />
                 <StatsBar label='Passgenauigkeit' home={stats.home?.passAccuracy}  away={stats.away?.passAccuracy}  homeColor={theme.primary} />
-                {stats.events?.length > 0 && <Timeline events={stats.events} />}
+                {stats.events?.length > 0 && <Timeline events={stats.events} onPlayerClick={(id, name) => openPlayer(id, name)} />}
               </div>
             );
           })()}
