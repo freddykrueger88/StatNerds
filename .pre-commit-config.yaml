@@ -1,0 +1,67 @@
+# StatNerds – Pre-Commit Hooks
+#
+# Tools, die als "system" laufen, müssen lokal installiert sein:
+#   gitleaks · actionlint · shellcheck · trivy · semgrep
+# Install: siehe AGENTS.md / README (alle binär via Release-Download).
+#
+# Lokale Audit/SBOM-Tools (syft, grype) laufen NICHT als pre-commit-Hook –
+# sie sind für das Image-Scanning in CI/Docker gedacht (sbom/vuln, zu langsam
+# für jeden Commit).
+
+repos:
+  # ── Basis-Hygiene ─────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+      - id: check-executables-have-shebangs
+
+  # ── Secrets (gitleaks, system-installiert) ───────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks-system
+        # gitleaks protect akzeptiert nur EIN path-Argument → pre-commit übergibt
+        # keine Dateiliste, gitleaks scannt stattdessen den staged Index selbst.
+        pass_filenames: false
+
+  # ── GitHub Actions (actionlint, system-installiert) ──────────────────────
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint-system
+
+  # ── Schwergewichtige Scanner als lokale system-Hooks ─────────────────────
+  # Bewusst als language: system – nutzt exakt die lokal installierten Binaries.
+  - repo: local
+    hooks:
+      # Shell-Skripte prüfen
+      - id: shellcheck
+        name: ShellCheck
+        entry: shellcheck
+        language: system
+        files: ^.*\.(sh|bash)$
+
+      # IaC-Misconfiguration (Dockerfiles, docker-compose.*)
+      # Pass_filenames false: trivy fs akzeptiert nur EIN Ziel → ganzer Repo-Root
+      - id: trivy-misconfig
+        name: Trivy – Misconfiguration
+        entry: trivy fs --scanners misconfig --exit-code 1 --skip-check-update --quiet --skip-dirs node_modules --skip-dirs .git --skip-dirs frontend/build .
+        language: system
+        pass_filenames: false
+        files: (^|/)(Dockerfile|Dockerfile\..*|docker-compose.*\.ya?ml)$
+
+      # Semgrep – Community-Regeln für JavaScript/JSX (p/javascript)
+      - id: semgrep
+        name: Semgrep (p/javascript)
+        entry: semgrep scan --disable-version-check --quiet --skip-unknown-extensions --config p/javascript
+        language: system
+        files: ^(backend/src|frontend/src)/.*\.(js|jsx)$
