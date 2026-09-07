@@ -223,6 +223,15 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
             <span style={{ color: '#555' }}>({favorites.length} Favorit{favorites.length === 1 ? '' : 'en'} per ★ in der Spielübersicht markieren)</span>
           </span>
         </label>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', marginTop: '0.6rem' }}>
+          <input type='checkbox' checked={!!notifyConfig.weekly} style={{ accentColor: theme.primary }}
+            onChange={e => setNotifyConfig({ ...notifyConfig, weekly: e.target.checked })} />
+          <span>
+            📋 Wöchentliche Ergebnis-Zusammenfassung (montags, nur wenn Benachrichtigungen aktiv)<br />
+            <span style={{ color: '#555', fontSize: '0.75rem' }}>Ergebnisse der letzten 7 Tage der gewählten Ligen als Push.</span>
+          </span>
+        </label>
       </div>
 
       {/* Land für TV-Übertragung */}

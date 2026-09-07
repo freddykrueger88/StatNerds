@@ -17,6 +17,7 @@ export const DEFAULT_NOTIFY_CONFIG = {
   types: ['goals'],
   leagues: ['bl1', 'bl2', 'fbl1', 'bbl'],
   onlyFavorites: false,
+  weekly: false,
 };
 
 export function useNotifyConfig() {

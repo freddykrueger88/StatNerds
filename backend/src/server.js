@@ -59,6 +59,7 @@ app.use('/api/players',     require('./routes/players'));
 app.use('/api/teamstats',   require('./routes/teamstats'));
 app.use('/api/prediction',  require('./routes/prediction'));
 app.use('/api/apifootball', require('./routes/apifootball'));
+app.use('/api/weekly',     require('./routes/weekly'));
 app.use('/api/broadcast',   require('./routes/broadcast').router);
 app.use('/api/referee',     require('./routes/referee'));
 app.use('/api/stats',       require('./routes/stats'));

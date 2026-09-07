@@ -1,13 +1,16 @@
 import React from 'react';
 import useNotifications from '../hooks/useNotifications';
+import useWeeklySummary from '../hooks/useWeeklySummary';
 import { useNotifyConfig } from '../hooks/useNotifyConfig';
 import { useToast } from './Toast';
 import { leagueSource } from '../leagues';
 
 export default function NotificationToggle({ theme, league }) {
   const [notifyConfig] = useNotifyConfig();
-  const { permission, watching, toggle } = useNotifications(league, notifyConfig);
+  const { permission, watching, toggle, sendNotification } = useNotifications(league, notifyConfig);
   const toast = useToast();
+
+  useWeeklySummary(notifyConfig, sendNotification);
 
   const handleToggle = async () => {
     if (permission === 'denied') {

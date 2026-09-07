@@ -28,6 +28,11 @@ export const getTeamWindow         = (league = 'bl1', team)      => request(`/ga
 export const getTeamForm           = (league = 'bl1', team)      => request(`/games/${league}/teamform?team=${encodeURIComponent(team)}`);
 export const getScorers            = (league = 'bl1')            => request(`/games/${league}/scorers`);
 export const getAssists            = (league = 'bl1')            => request(`/games/${league}/assists`);
+export const getWeeklySummary      = (leagues, teams, days = 7)  => {
+  const q1 = Array.isArray(leagues) && leagues.length ? `league=${encodeURIComponent(leagues.join(','))}` : '';
+  const q2 = Array.isArray(teams)   && teams.length   ? `teams=${encodeURIComponent(teams.join(','))}` : '';
+  return request(`/weekly/summary?${[q1, q2, `days=${days}`].filter(Boolean).join('&')}`);
+};
 export const getH2H                = (team1, team2, league = 'bl1') => request(`/games/${league}/h2h?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
 export const getCompare            = (team1, team2, league = 'bl1') => request(`/games/${league}/compare?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
 
