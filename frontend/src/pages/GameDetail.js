@@ -222,7 +222,7 @@ export default function GameDetail({ game, league, theme, onBack }) {
             return (
               <div>
                 <StatsBar label='Ballbesitz'      home={stats.home?.possession}    away={stats.away?.possession}    homeColor={theme.primary} />
-                <StatsBar label='xG'              home={stats.home?.xG}            away={stats.away?.xG}            homeColor={theme.primary} />
+                <StatsBar label='xG' hint='Expected Goals – die statistisch erwarteten Tore aus den Torchancen' home={stats.home?.xG} away={stats.away?.xG} homeColor={theme.primary} />
                 <StatsBar label='Schüsse'         home={stats.home?.shots}          away={stats.away?.shots}          homeColor={theme.primary} />
                 <StatsBar label='Auf Tor'         home={stats.home?.shotsOnTarget} away={stats.away?.shotsOnTarget} homeColor={theme.primary} />
                 <StatsBar label='Ecken'           home={stats.home?.corners}       away={stats.away?.corners}       homeColor={theme.primary} />

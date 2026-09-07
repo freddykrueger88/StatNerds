@@ -87,6 +87,9 @@ useEffect(() => {
   document.documentElement.style.fontSize = FONT_SIZES[fontSize] || FONT_SIZES.normal;
 }, [fontSize]);
 
+// Issue #24: Fokus-Modus – reduzierte, reizarme Darstellung (ADHS/kognitiv).
+const [focusMode, setFocusMode] = useLocalStorage('sn_focus_mode', false);
+
   const sport = leagueSport(league);
   const nav = NAV[sport] || NAV.football;
   const effectiveView = nav.some(n => n.id === view) ? view : 'dashboard';
@@ -101,8 +104,15 @@ useEffect(() => {
   const effectiveTheme = accent ? { ...theme, primary: accent, secondary: '#000000' } : theme;
 
   return (
-    <div className={light ? 'sn-light' : undefined} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', background: '#0f0f0f', color: '#fff', minHeight: '100dvh' }}>
-      <nav style={{
+    <div className={`${light ? 'sn-light ' : ''}${focusMode ? 'sn-focus' : ''}`} style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', background: '#0f0f0f', color: '#fff', minHeight: '100dvh' }}>
+      {/* Issue #24: Skip-Link – „Zum Inhalt springen“ für Tastatur-/Screenreader-Nutzer */}
+      <a href="#main-content"
+        style={{ position: 'absolute', left: '-9999px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}
+        onFocus={e => e.target.style.cssText = 'position:absolute;left:0.5rem;top:0.5rem;z-index:9999;background:#fff;color:#000;padding:0.5rem 1rem;border-radius:6px;font-weight:bold;text-decoration:none;'}
+        onBlur={e => e.target.style.cssText = 'position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'}>
+        🔗 Zum Inhalt springen
+      </a>
+      <nav aria-label='Hauptnavigation' style={{
         background: '#1a1a1a', borderBottom: `2px solid ${effectiveTheme.primary}`,
         padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem',
         position: 'sticky', top: 0, zIndex: 100, ...lightStyle,
@@ -110,14 +120,14 @@ useEffect(() => {
         <span style={{ fontWeight: 'bold', fontSize: '1rem', marginRight: '0.2rem', color: effectiveTheme.primary, whiteSpace: 'nowrap' }}>📊 StatNerds</span>
         <div style={{ display: 'flex', gap: '0.25rem', flex: 1, flexWrap: 'wrap' }}>
           {nav.map(n => (
-            <button key={n.id} onClick={() => setView(n.id)} style={{
+            <button key={n.id} onClick={() => setView(n.id)} aria-label={effectiveView === n.id ? `${t(n.tKey)} (aktiv)` : t(n.tKey)} style={{
               background: effectiveView === n.id ? effectiveTheme.primary : 'transparent',
               color: effectiveView === n.id ? '#fff' : '#666',
               border: 'none', borderRadius: '6px',
-              padding: '0.3rem 0.55rem', cursor: 'pointer',
+              padding: '0.45rem 0.55rem', cursor: 'pointer', minHeight: '44px',
               fontWeight: effectiveView === n.id ? 'bold' : 'normal', fontSize: '0.82rem'
             }}>
-              <span>{n.label}</span>
+              <span aria-hidden='true'>{n.label}</span>
               {n.tKey && <span className='nav-label' style={{ marginLeft: '0.2rem' }}>{t(n.tKey)}</span>}
             </button>
           ))}
@@ -150,7 +160,7 @@ useEffect(() => {
         </div>
       </nav>
 
-      <div key={effectiveView} style={{ padding: '0.75rem', maxWidth: '960px', margin: '0 auto', paddingBottom: '5rem', ...lightStyle }} className='page-fade sn-mid'>
+      <main id='main-content' style={{ padding: '0.75rem', maxWidth: '960px', margin: '0 auto', paddingBottom: '5rem', ...lightStyle }} className='page-fade sn-mid'>
         {effectiveView === 'dashboard' && <Dashboard  theme={effectiveTheme} onNavigate={(v, l) => { if (l) setLeague(l); setView(v); }} />}
         {effectiveView === 'games'     && <Games     theme={effectiveTheme} league={league} />}
         {effectiveView === 'table'     && <Table     theme={effectiveTheme} league={league} />}
@@ -163,24 +173,24 @@ useEffect(() => {
         {effectiveView === 'seasoncmp' && <SeasonCompare theme={effectiveTheme} league={league} />}
         {effectiveView === 'history'   && <History   theme={effectiveTheme} league={league}
           onNavigate={(v, l) => { if (l) setLeague(l); setView(v); }} />}
-        {effectiveView === 'settings'  && <Settings  theme={effectiveTheme} setTheme={setTheme} mode={mode} setMode={setMode} fontSize={fontSize} setFontSize={setFontSize} />}
-      </div>
+        {effectiveView === 'settings'  && <Settings  theme={effectiveTheme} setTheme={setTheme} mode={mode} setMode={setMode} fontSize={fontSize} setFontSize={setFontSize} focusMode={focusMode} setFocusMode={setFocusMode} />}
+      </main>
 
-      <nav style={{
+      <nav aria-label='Mobile Navigation' className='mobile-bottom-nav' style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         background: '#1a1a1a', borderTop: `2px solid ${effectiveTheme.primary}`,
         display: 'flex', justifyContent: 'space-around', alignItems: 'center',
         padding: '0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom))',
         zIndex: 200, ...lightStyle,
-      }} className='mobile-bottom-nav'>
+      }}>
         {nav.filter(n => n.mobile !== false).map(n => (
-          <button key={n.id} onClick={() => setView(n.id)} style={{
+          <button key={n.id} onClick={() => setView(n.id)} aria-label={n.tKey ? t(n.tKey) : effectiveView === n.id ? `${n.label} (aktiv)` : n.label} style={{
             background: 'transparent', border: 'none', cursor: 'pointer',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
             padding: '0.2rem 0.4rem', minWidth: '44px', minHeight: '44px',
             color: effectiveView === n.id ? effectiveTheme.primary : '#555',
           }}>
-            <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{n.label}</span>
+            <span aria-hidden='true'>{n.label}</span>
             {n.tKey && <span style={{ fontSize: '0.5rem', fontWeight: effectiveView === n.id ? 'bold' : 'normal' }}>{t(n.tKey)}</span>}
           </button>
         ))}
@@ -205,6 +215,22 @@ useEffect(() => {
         /* Issue #7: Light-Mode – Bilder doppelt invertieren, damit Logos/Fotos
            trotz umgekehrtem Bereich korrekt bleiben. */
         .sn-light img, .sn-light video, .sn-light iframe { filter: invert(1) hue-rotate(180deg); }
+
+        /* Issue #24: a11y – sichtbarer Fokus-Indikator (WCAG AA, 3:1) */
+        :focus { outline: 2px solid #4f8cff; outline-offset: 2px; }
+        :focus:not(:focus-visible) { outline: none; }
+        /* Touch-Ziele ≥ 44x44 auf interaktiven Mobile-Elementen */
+        @media (max-width: 599px) {
+          button, a, select { min-height: 44px; }
+        }
+        /* Zeilenabstand ≥ 1.5 für Fließtext; klare Schrift */
+        p, li, .sn-mid { line-height: 1.5; }
+
+        /* Issue #24: Fokus-Modus – reizarme Darstellung ohne Animationen/Flashs */
+        .sn-focus * { animation: none !important; transition: none !important; }
+        .sn-focus .sn-flashcard, .sn-focus [style*='box-shadow'] { box-shadow: none !important; }
+        .sn-focus img { opacity: 0.85; }
+        .sn-focus .mobile-bottom-nav { opacity: 0.92; }
       `}</style>
     </div>
   );

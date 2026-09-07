@@ -103,7 +103,7 @@ function useApiKeys() {
   };
 }
 
-export default function Settings({ theme, setTheme, mode, setMode, fontSize, setFontSize }) {
+export default function Settings({ theme, setTheme, mode, setMode, fontSize, setFontSize, focusMode, setFocusMode }) {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
   const { keys, setters }               = useApiKeys();
@@ -433,6 +433,17 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
         <p style={{ color: '#555', fontSize: '0.75rem', margin: '0.6rem 0 0 0' }}>
           Gespeichert in <code style={{ color: '#888' }}>sn_font_size</code>. Klein = 14px, Normal = 16px, Groß = 18px Basis.
         </p>
+      </div>
+
+      {/* Barrierefreiheit (Issue #24) */}
+      <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>♿ Barrierefreiheit</h3>
+        <span style={lbl}>Fokus-Modus: reizarme Darstellung ohne Animationen/Flashs – für konzentrierteres Arbeiten (ADHS & kognitiv).</span>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          <input type='checkbox' checked={!!focusMode} style={{ accentColor: theme.primary, width: '18px', height: '18px' }}
+            onChange={e => setFocusMode(e.target.checked)} />
+          <span><strong style={{ color: theme.primary }}>Fokus-Modus</strong> &nbsp;<span style={{ color: '#555' }}>(Animationen aus, reduzierte Unruhe)</span></span>
+        </label>
       </div>
 
       {/* API-Keys */}

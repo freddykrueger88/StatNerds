@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function StatsBar({ label, home, away, homeColor, format }) {
+export default function StatsBar({ label, home, away, homeColor, format, hint }) {
   const fmt = v => {
     if (v === null || v === undefined) return '-';
     if (format === 'percent') return v;
@@ -17,7 +17,7 @@ export default function StatsBar({ label, home, away, homeColor, format }) {
     <div style={{ marginBottom: '0.6rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#888', marginBottom: '2px' }}>
         <span style={{ fontWeight: 'bold', color: '#ddd' }}>{fmt(home)}</span>
-        <span style={{ color: '#555' }}>{label}</span>
+        <span style={{ color: '#555' }} title={hint} aria-label={hint ? `${label}: ${hint}` : undefined}>{label}</span>
         <span style={{ fontWeight: 'bold', color: '#ddd' }}>{fmt(away)}</span>
       </div>
       <div style={{ display: 'flex', borderRadius: '4px', overflow: 'hidden', height: '6px', background: '#333' }}>

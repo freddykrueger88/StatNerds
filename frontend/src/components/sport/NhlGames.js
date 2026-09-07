@@ -59,7 +59,7 @@ export default function NhlGames({ theme }) {
                 <div key={t.abbrev} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.15rem 0' }}>
                   {t.logo ? <img src={t.logo} alt='' style={{ height: '26px', width: '26px', objectFit: 'contain' }} /> : <span style={{ width: '26px' }} />}
                   <span style={{ flex: 1 }}>{t.name}</span>
-                  {showScore && <strong style={{ fontSize: '1.05rem', color: theme.primary }}>{score ?? '-'}</strong>}
+                  {showScore && <strong aria-live='polite' style={{ fontSize: '1.05rem', color: theme.primary }}>{score ?? '-'}</strong>}
                 </div>
               );
             })}

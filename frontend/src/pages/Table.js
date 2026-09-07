@@ -77,7 +77,11 @@ export default function Table({ theme, league }) {
               borderBottom: '1px solid #1a1a1a',
               background: promo ? 'rgba(74,222,128,0.04)' : releg ? 'rgba(248,113,113,0.04)' : 'transparent'
             }}>
-              <td style={{ padding: '0.5rem', color: promo ? '#4ade80' : releg ? '#f87171' : '#aaa', fontWeight: 'bold' }}>{i + 1}</td>
+              <td style={{ padding: '0.5rem', color: promo ? '#4ade80' : releg ? '#f87171' : '#aaa', fontWeight: 'bold' }}>
+                {i + 1}
+                {promo && <span aria-hidden='true' style={{ marginLeft: '0.2rem', fontSize: '0.7rem' }}>▲</span>}
+                {releg && <span aria-hidden='true' style={{ marginLeft: '0.2rem', fontSize: '0.7rem' }}>▼</span>}
+              </td>
               <td style={{ padding: '0.5rem' }}>
                 {/* Wrapper-div nötig – td darf kein flex-Container sein */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -98,8 +102,8 @@ export default function Table({ theme, league }) {
         </tbody>
       </table>
       <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: '#444' }}>
-        <span style={{ color: '#4ade80' }}>■</span> {league === 'bl2' ? 'Aufstieg / Relegation' : league === 'fbl1' ? 'Champions League' : 'Champions League'} &nbsp;
-        <span style={{ color: '#f87171' }}>■</span> Abstieg
+        <span style={{ color: '#4ade80' }}>▲</span>/<span style={{ color: '#4ade80' }}>■</span> {league === 'bl2' ? 'Aufstieg / Relegation' : league === 'fbl1' ? 'Champions League' : 'Champions League'} &nbsp;
+        <span style={{ color: '#f87171' }}>▼</span>/<span style={{ color: '#f87171' }}>■</span> Abstieg
       </div>
     </div>
   );

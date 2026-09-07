@@ -71,12 +71,14 @@ function GameCard({ game, hero, theme, league, onClick, pinned, togglePin, flash
           <button
             onClick={e => { e.stopPropagation(); togglePinFn(game.matchID); }}
             title={pinnedState ? 'Spiel lösen' : 'Spiel anpinnen'}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: pinnedState ? theme.primary : '#333', padding: 0 }}
+            aria-label={pinnedState ? `${t1} – ${t2}: Spiel lösen` : `${t1} – ${t2} anpinnen`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: pinnedState ? theme.primary : '#333', padding: '0.3rem', minHeight: '44px', minWidth: '44px' }}
           >📌</button>
           <button
             onClick={e => { e.stopPropagation(); toggleFav(game.team1?.teamId); }}
             title='Verein favorisieren'
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: isFav ? '#facc15' : '#333', padding: 0 }}
+            aria-label={isFav ? `${t1} aus Favoriten entfernen` : `${t1} zu Favoriten hinzufügen`}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem', color: isFav ? '#facc15' : '#333', padding: '0.3rem', minHeight: '44px', minWidth: '44px' }}
           >★</button>
         </div>
 
@@ -86,11 +88,11 @@ function GameCard({ game, hero, theme, league, onClick, pinned, togglePin, flash
         </div>
 
         <div onClick={() => onClick(game)} style={{ textAlign: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: hero ? '2rem' : '1.2rem', color: '#facc15', fontWeight: 'bold' }}>
-            {final ? `${final.pointsTeam1} : ${final.pointsTeam2}` : isLive ? '🔴' : 'vs'}
+          <div aria-live='polite' style={{ fontSize: hero ? '2rem' : '1.2rem', color: '#facc15', fontWeight: 'bold' }}>
+            {final ? `${t1} ${final.pointsTeam1} : ${final.pointsTeam2} ${t2}` : isLive ? `${t1} – ${t2} 🔴 LIVE` : `${t1} vs ${t2}`}
           </div>
           {half       && <div style={{ fontSize: '0.68rem', color: '#555' }}>HZ {half.pointsTeam1}:{half.pointsTeam2}</div>}
-          {isLive     && <div style={{ fontSize: '0.68rem', color: '#f87171' }}>● LIVE</div>}
+          {isLive     && <span style={{ fontSize: '0.68rem', color: '#f87171' }}>● LIVE</span>}
           {isUpcoming && <CountdownBadge date={game.matchDateTimeUTC} />}
         </div>
 
