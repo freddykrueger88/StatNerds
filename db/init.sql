@@ -75,6 +75,23 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Benutzerkonten (Issue #15)
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Server-seitige Einstellungen & Favoriten pro Benutzer (Issue #15)
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  key VARCHAR(50) NOT NULL,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (user_id, key)
+);
+
 -- Standarddaten
 INSERT INTO sports (name) VALUES ('Fussball'), ('Basketball'), ('Tennis')
   ON CONFLICT (name) DO NOTHING;

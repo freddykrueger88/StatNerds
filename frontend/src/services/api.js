@@ -7,7 +7,11 @@ const BASE = '/api';
 
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, options);
-  if (!res.ok) throw new Error(`HTTP ${res.status} – ${path}`);
+  if (!res.ok) {
+    let msg = `HTTP ${res.status} – ${path}`;
+    try { const body = await res.json(); if (body?.error) msg = body.error; } catch {}
+    throw new Error(msg);
+  }
   return res.json();
 }
 
@@ -33,6 +37,22 @@ export const getWeeklySummary      = (leagues, teams, days = 7)  => {
   const q2 = Array.isArray(teams)   && teams.length   ? `teams=${encodeURIComponent(teams.join(','))}` : '';
   return request(`/weekly/summary?${[q1, q2, `days=${days}`].filter(Boolean).join('&')}`);
 };
+
+// ── Benutzerkonto (Issue #15) ──────────────────────────────────────────
+const JSON_OPTS = data => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data),
+});
+
+export const authRegister  = (email, password, settings) => request('/auth/register', JSON_OPTS({ email, password, settings }));
+export const authLogin     = (email, password, settings) => request('/auth/login',    JSON_OPTS({ email, password, settings }));
+export const authMe        = token => request('/auth/me',    { headers: { Authorization: `Bearer ${token}` } });
+export const authSync      = (token, settings) => request('/auth/sync', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  body: JSON.stringify({ settings }),
+});
 export const getH2H                = (team1, team2, league = 'bl1') => request(`/games/${league}/h2h?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
 export const getCompare            = (team1, team2, league = 'bl1') => request(`/games/${league}/compare?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
 

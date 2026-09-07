@@ -54,7 +54,7 @@ repos:
       # Pass_filenames false: trivy fs akzeptiert nur EIN Ziel → ganzer Repo-Root
       - id: trivy-misconfig
         name: Trivy – Misconfiguration
-        entry: trivy fs --scanners misconfig --exit-code 1 --skip-check-update --quiet --skip-dirs node_modules --skip-dirs .git --skip-dirs frontend/build .
+        entry: trivy fs --scanners misconfig --exit-code 1 --skip-check-update --quiet --skip-dirs node_modules --skip-dirs frontend/node_modules --skip-dirs .git --skip-dirs frontend/build .
         language: system
         pass_filenames: false
         files: (^|/)(Dockerfile|Dockerfile\..*|docker-compose.*\.ya?ml)$

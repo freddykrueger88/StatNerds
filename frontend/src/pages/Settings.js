@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useFavorites } from '../hooks/useFavorites';
 import { useNotifyConfig, NOTIFY_TYPES, NOTIFY_LEAGUES } from '../hooks/useNotifyConfig';
+import { useAuth } from '../hooks/useAuth';
 import { cleanupStats } from '../services/api';
 
 const APP_VERSION = process.env.REACT_APP_VERSION || '0.6.0';
@@ -111,7 +112,44 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
   const [favSaved, setFavSaved]         = useState(false);
   const [country, setCountry]           = useLocalStorage('sn_country', 'DE');
   const [notifyConfig, setNotifyConfig] = useNotifyConfig();
-  const { favorites }                   = useFavorites();
+  const { favorites, setFavorites }     = useFavorites();
+  const [league, setLeague]             = useLocalStorage('sn_league', 'bl1');
+  const auth                            = useAuth();
+  const [authEmail, setAuthEmail]       = useState('');
+  const [authPass,  setAuthPass]        = useState('');
+  const [authMsg,   setAuthMsg]         = useState('');
+
+  // Lokale Einstellungen/Favoriten → Server-Format (Issue #15)
+  const localSettings = () => ({
+    favorites: favorites,
+    theme: theme,
+    notifyConfig: notifyConfig,
+    mode: mode,
+    fontSize: fontSize,
+    league: league,
+  });
+
+  // Server-Settings → lokale Setter (Issue #15)
+  const serverSetters = {
+    favorites: setFavorites,
+    theme: setTheme,
+    notifyConfig: setNotifyConfig,
+    mode: setMode,
+    fontSize: setFontSize,
+    league: setLeague,
+  };
+
+  const handleAuth = async (kind) => {
+    if (!authEmail.trim() || authPass.length < 8) {
+      setAuthMsg('❌ Gültige E-Mail + Passwort (min. 8 Zeichen) erforderlich.');
+      return;
+    }
+    const result = kind === 'register'
+      ? await auth.register(authEmail, authPass, localSettings(), serverSetters)
+      : await auth.login(authEmail, authPass, localSettings(), serverSetters);
+    setAuthMsg(result.ok ? '✅ ' + result.message : '❌ ' + result.message);
+    if (result.ok) { setAuthPass(''); }
+  };
 
   const saveFavorite = (teamName) => {
     setFavoriteTeam(teamName);
@@ -147,6 +185,60 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
   return (
     <div style={{ maxWidth: '700px', paddingBottom: '3rem' }}>
       <h2 style={{ color: theme.primary }}>⚙️ Einstellungen</h2>
+
+      {/* Benutzerkonto (Issue #15) */}
+      <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>👤 Benutzerkonto</h3>
+        <span style={lbl}>
+          {auth.loggedIn
+            ? <>Angemeldet als <strong>{auth.email}</strong> – Einstellungen &amp; Favoriten werden auf dem Server gespeichert und geräteübergreifend synchronisiert.</>
+            : <>Optional: Konto erstellen, um Einstellungen &amp; Favoriten geräteübergreifend zu speichern. Ohne Konto bleibt die App im <strong>Gast-Modus</strong> (alles nur lokal).</>}
+        </span>
+
+        {!auth.loggedIn ? (
+          <>
+            <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <input type='email' placeholder='E-Mail-Adresse' value={authEmail}
+                  onChange={e => setAuthEmail(e.target.value)}
+                  style={{ background: '#111', color: '#fff', border: `1px solid ${theme.primary}44`, borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.9rem' }} />
+                <input type='password' placeholder='Passwort (min. 8 Zeichen)' value={authPass}
+                  onChange={e => setAuthPass(e.target.value)}
+                  style={{ background: '#111', color: '#fff', border: `1px solid ${theme.primary}44`, borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.9rem' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <button onClick={() => handleAuth('login')} disabled={auth.busy}
+                  style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem 1rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                  {auth.busy ? '…' : '🔑 Anmelden'}
+                </button>
+                <button onClick={() => handleAuth('register')} disabled={auth.busy}
+                  style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}66`, borderRadius: '8px', padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                  {auth.busy ? '…' : '➕ Konto erstellen'}
+                </button>
+              </div>
+            </div>
+            <p style={{ color: '#555', fontSize: '0.78rem', margin: '0.5rem 0 0 0' }}>
+              🔒 Passwörter werden mit scrypt gehasht und nie im Klartext gespeichert.
+            </p>
+          </>
+        ) : (
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <button onClick={async () => { const r = await auth.syncToServer(localSettings()); setAuthMsg(r.ok ? '✅ ' + r.message : '❌ ' + r.message); }}
+              style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>
+              ☁️ Einstellungen hochladen
+            </button>
+            <button onClick={async () => { const r = await auth.syncFromServer(serverSetters); setAuthMsg(r.ok ? '✅ ' + r.message : '❌ ' + r.message); }}
+              style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}66`, borderRadius: '8px', padding: '0.5rem 1rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+              ☁️ Vom Server laden
+            </button>
+            <button onClick={() => { auth.logout(); setAuthMsg('👋 Abgemeldet. Alles läuft wieder lokal (Gast-Modus).'); }}
+              style={{ background: 'transparent', color: '#f87171', border: '1px solid #f8717166', borderRadius: '8px', padding: '0.5rem 1rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+              🚪 Abmelden
+            </button>
+          </div>
+        )}
+        {authMsg && <p style={{ fontSize: '0.82rem', color: authMsg.startsWith('✅') || authMsg.startsWith('👋') ? '#4ade80' : '#f87171', margin: '0.6rem 0 0 0' }}>{authMsg}</p>}
+      </div>
 
       {/* Lieblingsverein */}
       <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
