@@ -1,4 +1,4 @@
-# Produktion: HTTPS via Caddy (hält Let's Encrypt-Zertifikate automatisch aktuell), 
+# Produktion: HTTPS via Caddy (hält Let's Encrypt-Zertifikate automatisch aktuell),
 # keine Dev-volumes, Resource-Limits. Nicht mit docker-compose.yml mischen –
 # entweder Dev (docker compose) ODER Prod (docker compose -f docker-compose.prod.yml).
 services:
@@ -58,7 +58,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     expose:
-      - '80'
+      - '8080'
     depends_on:
       - backend
     deploy:

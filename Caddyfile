@@ -7,7 +7,7 @@
 # Caddy terminiert internes TLS-Zertifikat statt Let's Encrypt.
 
 https://{$PUBLIC_HOST} {
-	reverse_proxy frontend:80
+	reverse_proxy frontend:8080
 
 	encode zstd gzip
 
