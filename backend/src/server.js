@@ -73,6 +73,8 @@ app.use('/api/picks',      require('./routes/picks'));
 app.use('/api/apikeys',    require('./routes/apikeys'));
 app.use('/api',            require('./routes/docs'));
 app.use('/api/broadcast',   require('./routes/broadcast').router);
+app.use('/api/nhl',         require('./routes/nhl'));
+app.use('/api/f1',          require('./routes/f1'));
 app.use('/api/referee',     require('./routes/referee'));
 app.use('/api/stats',       require('./routes/stats'));
 

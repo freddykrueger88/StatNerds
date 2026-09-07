@@ -68,6 +68,15 @@ export const getCompare            = (team1, team2, league = 'bl1') => request(`
 
 // ── ESPN Public API (keyless: NBA, ATP, WTA) ────────────────────────────────
 export const getEspnCurrent        = (league)                    => request(`/espn/${league}/current`);
+export const getNhlCurrent         = ()                          => request('/nhl/current');
+export const getNhlStandings       = ()                          => request('/nhl/standings');
+export const getNhlLeaders         = ()                          => request('/nhl/leaders');
+export const getNhlTeams           = ()                          => request('/nhl/teams');
+export const getF1Drivers          = (season)                    => request(`/f1/drivers${season ? `?season=${season}` : ''}`);
+export const getF1Constructors     = (season)                    => request(`/f1/constructors${season ? `?season=${season}` : ''}`);
+export const getF1Schedule         = (season)                    => request(`/f1/schedule${season ? `?season=${season}` : ''}`);
+export const getF1Results          = (round, season)             => request(`/f1/results/${round}${season ? `?season=${season}` : ''}`);
+export const getF1PitStops         = (round, season)             => request(`/f1/lap-times/${round}${season ? `?season=${season}` : ''}`);
 export const getNbaStandings       = ()                          => request('/espn/nba/standings');
 export const getNbaTeams           = ()                          => request('/espn/nba/teams');
 export const getTennisRankings     = (league)                    => request(`/espn/${league}/rankings`);

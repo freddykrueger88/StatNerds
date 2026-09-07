@@ -8,6 +8,8 @@ import CsvButton from '../components/CsvButton';
 import PdfButton from '../components/PdfButton';
 import NbaStandings from '../components/sport/NbaStandings';
 import TennisRankings from '../components/sport/TennisRankings';
+import NhlStandings from '../components/sport/NhlStandings';
+import F1Standings from '../components/sport/F1Standings';
 import { leagueLabel, leagueSource, seasonLabel } from '../leagues';
 
 const CSV_COLUMNS = [
@@ -33,6 +35,8 @@ export default function Table({ theme, league }) {
     if (league === 'nba') return <NbaStandings theme={theme} />;
     return <TennisRankings theme={theme} league={league} />;
   }
+  if (source === 'nhl') return <NhlStandings theme={theme} />;
+  if (source === 'f1')  return <F1Standings theme={theme} />;
   if (source !== 'openligadb') return <LeagueUnavailable league={league} />;
 
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '3rem' }}>⏳ Lade Tabelle...</p>;

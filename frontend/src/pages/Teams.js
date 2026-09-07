@@ -8,6 +8,8 @@ import LeagueUnavailable from '../components/LeagueUnavailable';
 import { TeamCard, TeamDetail, PlayerDetail, APIF } from '../components/squad';
 import NbaTeams from '../components/sport/NbaTeams';
 import TennisRankings from '../components/sport/TennisRankings';
+import NhlTeams from '../components/sport/NhlTeams';
+import F1Standings from '../components/sport/F1Standings';
 import { leagueSource } from '../leagues';
 
 export default function Teams({ theme, league }) {
@@ -33,6 +35,8 @@ export default function Teams({ theme, league }) {
     if (league === 'nba') return <NbaTeams theme={theme} />;
     return <TennisRankings theme={theme} league={league} />;
   }
+  if (source === 'nhl') return <NhlTeams theme={theme} />;
+  if (source === 'f1')  return <F1Standings theme={theme} />;
   if (source !== 'openligadb') return <LeagueUnavailable league={league} />;
 
   const openTeam = t => {

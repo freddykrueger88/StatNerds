@@ -8,6 +8,7 @@ import LeagueUnavailable from '../components/LeagueUnavailable';
 import CsvButton from '../components/CsvButton';
 import PdfButton from '../components/PdfButton';
 import { PlayerDetail, APIF } from '../components/squad';
+import NhlLeaders from '../components/sport/NhlLeaders';
 import { leagueLabel, leagueSource, seasonLabel } from '../leagues';
 
 const GOAL_COLUMNS = [
@@ -88,6 +89,7 @@ export default function Scorers({ theme, league }) {
   const assists = Array.isArray(assistsFetch.data) ? assistsFetch.data : [];
   const season  = useLeagueSeason(league);
 
+  if (league === 'nhl') return <NhlLeaders theme={theme} />;
   if (leagueSource(league) !== 'openligadb') return <LeagueUnavailable league={league} />;
 
   const openPlayerSearch = async name => {
