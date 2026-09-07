@@ -136,3 +136,5 @@ router.put('/sync', requireAuth, async (req, res, next) => {
 });
 
 module.exports = router;
+module.exports.requireAuth = requireAuth;
+module.exports.verifyToken = verifyToken;

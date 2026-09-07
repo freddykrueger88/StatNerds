@@ -53,6 +53,16 @@ export const authSync      = (token, settings) => request('/auth/sync', {
   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
   body: JSON.stringify({ settings }),
 });
+const AUTH_JSON = (token, data) => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  body: JSON.stringify(data),
+});
+
+// ── Tipp-Spiel (Issue #23) ────────────────────────────────────────────────
+export const submitPick       = (league, token, pick) => request(`/picks/${league}`, AUTH_JSON(token, pick));
+export const getMyPicks       = (league, token)       => request(`/picks/${league}/mine`, { headers: { Authorization: `Bearer ${token}` } });
+export const getPickRanking   = (league, users)       => request(`/picks/${league}/ranking${users?.length ? `?users=${encodeURIComponent(users.join(','))}` : ''}`);
 export const getH2H                = (team1, team2, league = 'bl1') => request(`/games/${league}/h2h?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
 export const getCompare            = (team1, team2, league = 'bl1') => request(`/games/${league}/compare?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
 

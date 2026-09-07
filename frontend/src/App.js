@@ -10,6 +10,7 @@ import Search     from './pages/Search';
 import SeasonCompare from './pages/SeasonCompare';
 import Settings   from './pages/Settings';
 import Compare    from './pages/Compare';
+import Picks      from './pages/Picks';
 import History    from './pages/History';
 import GlobalSearch      from './components/GlobalSearch';
 import NotificationToggle from './components/NotificationToggle';
@@ -39,6 +40,7 @@ const NAV = {
     { id: 'search',     label: '🔍',   tKey: 'nav.search',      mobile: false },
     { id: 'teamstats',  label: '📈',   tKey: 'nav.teamstats',   mobile: false },
     { id: 'teams',      label: '🏙️',  tKey: 'nav.teams'        },
+    { id: 'picks',      label: '🎯',   tKey: 'nav.picks',       mobile: false },
     { id: 'history',    label: '🕘',   tKey: 'nav.history',     mobile: false },
     { id: 'settings',   label: '⚙️',   tKey: 'nav.settings'     },
   ],
@@ -157,6 +159,7 @@ useEffect(() => {
         {effectiveView === 'teamstats' && <TeamStats theme={effectiveTheme} league={league} />}
         {effectiveView === 'teams'     && <Teams     theme={effectiveTheme} league={league} />}
         {effectiveView === 'compare'   && <Compare   theme={effectiveTheme} league={league} />}
+        {effectiveView === 'picks'     && <Picks     theme={effectiveTheme} league={league} />}
         {effectiveView === 'seasoncmp' && <SeasonCompare theme={effectiveTheme} league={league} />}
         {effectiveView === 'history'   && <History   theme={effectiveTheme} league={league}
           onNavigate={(v, l) => { if (l) setLeague(l); setView(v); }} />}

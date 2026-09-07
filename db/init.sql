@@ -101,6 +101,24 @@ CREATE TABLE IF NOT EXISTS api_keys (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Tipp-Spiel (Issue #23): Ergebnis-Tipps pro Benutzer + Spiel
+CREATE TABLE IF NOT EXISTS picks (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  league VARCHAR(20) NOT NULL,
+  match_id VARCHAR(40) NOT NULL,
+  match_date TIMESTAMP,
+  team_home VARCHAR(100),
+  team_away VARCHAR(100),
+  home_score INT,
+  away_score INT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE (user_id, league, match_id)
+);
+CREATE INDEX IF NOT EXISTS idx_picks_league ON picks (league, match_id);
+CREATE INDEX IF NOT EXISTS idx_picks_user ON picks (user_id);
+
 -- Standarddaten
 INSERT INTO sports (name) VALUES ('Fussball'), ('Basketball'), ('Tennis')
   ON CONFLICT (name) DO NOTHING;
