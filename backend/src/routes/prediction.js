@@ -31,15 +31,15 @@ function poissonPrediction(homeAvg, awayAvg, maxGoals = 6) {
 }
 
 // ── Historische Daten laden – alle Saisons PARALLEL ─────────────────────────
-async function loadHistory(seasons = [2023, 2024, 2025]) {
-  const cacheKey = 'pred_history_' + seasons.join('_');
+async function loadHistory(seasons = [2023, 2024, 2025], league = 'bl1') {
+  const cacheKey = 'pred_history_' + league + '_' + seasons.join('_');
   const cached   = cache.get(cacheKey);
   if (cached) return cached;
 
   // War sequentiell (for-loop) – jetzt alle Saisons parallel
   const results = await Promise.all(
     seasons.map(s =>
-      axios.get(`https://api.openligadb.de/getmatchdata/bl1/${s}`)
+      axios.get(`https://api.openligadb.de/getmatchdata/${league}/${s}`)
         .then(r => r.data.filter(g => g.matchIsFinished))
         .catch(() => [])
     )
@@ -49,17 +49,23 @@ async function loadHistory(seasons = [2023, 2024, 2025]) {
   return allGames;
 }
 
-// ── GET /api/prediction?team1=X&team2=Y ────────────────────────────────────
+const ALLOWED_LEAGUES = ['bl1', 'bl2', 'fbl1'];
+
+// ── GET /api/prediction?team1=X&team2=Y&league=bl2 ────────────────────
 router.get('/', async (req, res, next) => {
   const { team1, team2 } = req.query;
+  const league = req.query.league || 'bl1';
   if (!team1 || !team2) return res.status(400).json({ error: 'team1 und team2 erforderlich' });
+  if (!ALLOWED_LEAGUES.includes(league)) {
+    return res.status(400).json({ error: `Liga '${league}' nicht unterstützt. Erlaubt: ${ALLOWED_LEAGUES.join(', ')}` });
+  }
 
-  const cacheKey = `pred_${team1}_${team2}`;
+  const cacheKey = `pred_${league}_${team1}_${team2}`;
   const cached   = cache.get(cacheKey);
   if (cached) return res.json(cached);
 
   try {
-    const games = await loadHistory();
+    const games = await loadHistory(undefined, league);
     const normalize = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
     const t1 = normalize(team1);
     const t2 = normalize(team2);
@@ -91,7 +97,7 @@ router.get('/', async (req, res, next) => {
     );
 
     const result = {
-      team1, team2,
+      team1, team2, league,
       ...poissonPrediction(homeAvgLambda, awayAvgLambda),
       expected_goals_home: Math.round(homeAvgLambda * 10) / 10,
       expected_goals_away: Math.round(awayAvgLambda * 10) / 10,

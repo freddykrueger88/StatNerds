@@ -1,0 +1,22 @@
+# Umgebungs- & Secrets – nie committen
+.env
+*.env.local
+
+# Node
+node_modules/
+
+# DB-Daten (lokal gemounted) & Postgres
+db/data/
+
+# Build-Artefakte
+frontend/build/
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

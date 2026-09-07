@@ -2,58 +2,13 @@
 
 const BaseAdapter = require('../BaseAdapter');
 
-const LEAGUE_ID = 78;  // Bundesliga
-const BL2_ID    = 79;  // 2. Bundesliga
+const LEAGUE_ID = 140; // Spanish Primera División (La Liga)
 const SEASON    = process.env.FOOTBALL_SEASON || 2025;
 
-class BundesligaAdapter extends BaseAdapter {
+class LaLigaAdapter extends BaseAdapter {
   async getLive() {
     const r = await this.client.get(`/fixtures?live=all&league=${LEAGUE_ID}&season=${SEASON}`);
     return r.data;
-  }
-
-  async getTeams(leagueId) {
-    const r = await this.client.get('/teams', { params: { league: leagueId || LEAGUE_ID, season: SEASON } });
-    return (r.data?.response || []).map(t => ({
-      id: t.team.id, name: t.team.name, shortName: t.team.code,
-      logo: t.team.logo, country: t.team.country, founded: t.team.founded,
-      venue: t.venue?.name, venueCity: t.venue?.city, venueCapacity: t.venue?.capacity,
-    }));
-  }
-
-  async getSquad(teamId) {
-    const r = await this.client.get(`/players/squads?team=${teamId}`);
-    return (r.data?.response || []).map(p => ({
-      id: p.player.id, name: p.player.name, number: p.player.number,
-      position: p.player.position, photo: p.player.photo, age: p.player.age,
-    }));
-  }
-
-  async getPlayer(playerId) {
-    const r = await this.client.get(`/players?id=${playerId}&season=${SEASON}`);
-    const p = r.data?.response?.[0];
-    if (!p) return null;
-    const s = p.statistics?.[0] || {};
-    return {
-      id: playerId, name: p.player?.name, photo: p.player?.photo, age: p.player?.age,
-      birthDate: p.player?.birth?.date, birthPlace: p.player?.birth?.place,
-      nationality: p.player?.nationality, position: p.player?.position,
-      height: p.player?.height, weight: p.player?.weight,
-      team: s.team?.name, number: s.games?.number ?? null,
-      games: s.games?.appearences ?? null, minutes: s.games?.minutes ?? null,
-      goals: s.goals?.total ?? null, assists: s.goals?.assists ?? null,
-      yellowCards: s.cards?.yellow ?? null, redCards: s.cards?.red ?? null,
-      rating: s.games?.rating ?? null,
-    };
-  }
-
-  async searchPlayers(q, leagueId) {
-    const r = await this.client.get('/players', { params: { search: q, league: leagueId || LEAGUE_ID, season: SEASON } });
-    return (r.data?.response || []).map(({ player, statistics }) => ({
-      id: player?.id, name: player?.name, photo: player?.photo,
-      position: player?.position, age: player?.age,
-      team: statistics?.[0]?.team || null,
-    }));
   }
 
   async getSchedule(round) {
@@ -118,4 +73,4 @@ class BundesligaAdapter extends BaseAdapter {
   }
 }
 
-module.exports = BundesligaAdapter;
+module.exports = LaLigaAdapter;

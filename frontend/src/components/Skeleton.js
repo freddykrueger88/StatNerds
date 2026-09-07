@@ -2,8 +2,12 @@ import React from 'react';
 
 const pulse = `
 @keyframes sn-pulse {
-  0%, 100% { opacity: 0.4; }
+  0%, 100% { opacity: 0.45; }
   50% { opacity: 1; }
+}
+@keyframes sn-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 `;
 
@@ -13,8 +17,9 @@ function SkeletonBox({ width = '100%', height = '16px', radius = '6px', style = 
       <style>{pulse}</style>
       <div style={{
         width, height, borderRadius: radius,
-        background: 'linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%)',
-        animation: 'sn-pulse 1.4s ease-in-out infinite',
+        background: 'linear-gradient(100deg, #1a1a1a 30%, #2c2c2c 50%, #1a1a1a 70%)',
+        backgroundSize: '200% 100%',
+        animation: 'sn-pulse 1.4s ease-in-out infinite, sn-shimmer 2.2s linear infinite',
         ...style
       }} />
     </>

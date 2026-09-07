@@ -7,7 +7,7 @@ const router = express.Router();
 // GET /api/teamstats/:league
 router.get('/:league', async (req, res, next) => {
   const league   = req.params.league;
-  const allowed  = ['bl1', 'bl2'];
+  const allowed  = ['bl1', 'bl2', 'fbl1'];
   if (!allowed.includes(league)) {
     return res.status(400).json({ error: `Liga '${league}' nicht unterstützt.` });
   }

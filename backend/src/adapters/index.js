@@ -3,6 +3,7 @@
 const BundesligaAdapter      = require('./football/BundesligaAdapter');
 const ChampionsLeagueAdapter = require('./football/ChampionsLeagueAdapter');
 const PremierLeagueAdapter   = require('./football/PremierLeagueAdapter');
+const LaLigaAdapter          = require('./football/LaLigaAdapter');
 
 /**
  * Adapter-Registry.
@@ -13,6 +14,7 @@ const REGISTRY = {
   'bundesliga':       BundesligaAdapter,
   'champions-league': ChampionsLeagueAdapter,
   'premier-league':   PremierLeagueAdapter,
+  'la-liga':          LaLigaAdapter,
   // 'nba':            NBAAdapter,         // kommt mit Issue #5
   // 'tennis-atp':     TennisAdapter,      // kommt mit Issue #6
 };

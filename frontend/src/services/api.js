@@ -14,23 +14,39 @@ async function request(path, options = {}) {
 // ── Health ──────────────────────────────────────────────────────────────────
 export const getHealth             = ()                          => request('/health');
 
+// ── Meta ──────────────────────────────────────────────────────────────────
+export const getLeagueSeasons      = ()                          => request('/meta/seasons');
+
 // ── Spiele ────────────────────────────────────────────────────────────────
 export const getCurrentGames       = (league = 'bl1')            => request(`/games/${league}/current`);
 export const getGamesByDay         = (league = 'bl1', matchday)  => request(`/games/${league}/${matchday}`);
 export const getMatchdays          = (league = 'bl1')            => request(`/games/${league}/matchdays`);
 export const getTable              = (league = 'bl1')            => request(`/games/${league}/table`);
+export const getTableSeason        = (league, season)            => request(`/games/${league}/table?season=${season}`);
+export const getAvailableSeasons   = (league = 'bl1')            => request(`/games/${league}/seasons`);
+export const getTeamWindow         = (league = 'bl1', team)      => request(`/games/${league}/teamwindow?team=${encodeURIComponent(team)}`);
+export const getTeamForm           = (league = 'bl1', team)      => request(`/games/${league}/teamform?team=${encodeURIComponent(team)}`);
 export const getScorers            = (league = 'bl1')            => request(`/games/${league}/scorers`);
 export const getAssists            = (league = 'bl1')            => request(`/games/${league}/assists`);
-export const getH2H                = (team1, team2)              => request(`/games/bl1/h2h?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
+export const getH2H                = (team1, team2, league = 'bl1') => request(`/games/${league}/h2h?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
+export const getCompare            = (team1, team2, league = 'bl1') => request(`/games/${league}/compare?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
+
+// ── ESPN Public API (keyless: NBA, ATP, WTA) ────────────────────────────────
+export const getEspnCurrent        = (league)                    => request(`/espn/${league}/current`);
+export const getNbaStandings       = ()                          => request('/espn/nba/standings');
+export const getNbaTeams           = ()                          => request('/espn/nba/teams');
+export const getTennisRankings     = (league)                    => request(`/espn/${league}/rankings`);
+export const getTennisPlayer       = (league, playerId)          => request(`/espn/${league}/player/${playerId}`);
 
 // ── Vereine ───────────────────────────────────────────────────────────────
-export const getTeamList           = ()                          => request('/teams');
+export const getTeamList           = (league = '')            => request(`/teams${league ? `?liga=${league}` : ''}`);
 export const searchTeams           = (q)                         => request(`/teams/search?q=${encodeURIComponent(q)}`);
 export const getTeamDetail         = (sportsdbId)                => request(`/teams/${sportsdbId}`);
+export const getPlayer             = (sportsdbId)                => request(`/players/${sportsdbId}`);
 export const getTeamStats          = (league = 'bl1')            => request(`/teamstats/${league}`);
 
 // ── Prognose ──────────────────────────────────────────────────────────────
-export const getPrediction         = (team1, team2)              => request(`/prediction?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}`);
+export const getPrediction         = (team1, team2, league = 'bl1') => request(`/prediction?team1=${encodeURIComponent(team1)}&team2=${encodeURIComponent(team2)}&league=${league}`);
 export const getPredictionXG       = (fixtureId, apiKey)         => request(`/prediction/xg?fixtureId=${fixtureId}`, { headers: { 'x-api-key': apiKey } });
 
 // ── TV-Übertragung ───────────────────────────────────────────────────────────
@@ -44,10 +60,15 @@ export const getRefereeMatchday    = (matchday)                  => request(`/re
 export const getRefereeApif        = (fixtureId, apiKey)         => request(`/referee/apif/${fixtureId}`, { headers: { 'x-api-key': apiKey } });
 
 // ── API-Football (Key benötigt) ────────────────────────────────────────────────
-export const getApiFootballLive    = (apiKey)                    => request('/apifootball/live',                            { headers: { 'x-api-key': apiKey } });
-export const getApiFootballStats   = (fixtureId, apiKey)         => request(`/apifootball/stats/${fixtureId}`,              { headers: { 'x-api-key': apiKey } });
-export const getApiFootballFixture = (fixtureId, apiKey)         => request(`/apifootball/fixture/${fixtureId}`,            { headers: { 'x-api-key': apiKey } });
-export const getApiFootballSchedule= (apiKey, round)             => request(`/apifootball/schedule${round ? `?round=${encodeURIComponent(round)}` : ''}`, { headers: { 'x-api-key': apiKey } });
+// league = Registry-Name des Adapters ('bundesliga', 'champions-league', …)
+export const getApiFootballLive    = (league, apiKey)                    => request(`/apifootball/${league}/live`,                          { headers: { 'x-api-key': apiKey } });
+export const getApiFootballStats   = (fixtureId, league, apiKey)         => request(`/apifootball/${league}/stats/${fixtureId}`,            { headers: { 'x-api-key': apiKey } });
+export const getApiFootballFixture = (fixtureId, league, apiKey)         => request(`/apifootball/${league}/fixture/${fixtureId}`,          { headers: { 'x-api-key': apiKey } });
+export const getApiFootballSchedule= (league, apiKey, round)             => request(`/apifootball/${league}/schedule${round ? `?round=${encodeURIComponent(round)}` : ''}`, { headers: { 'x-api-key': apiKey } });
+export const getApiFootballTeams   = (league, apiKey, leagueId)          => request(`/apifootball/${league}/teams${leagueId ? `?leagueId=${leagueId}` : ''}`, { headers: { 'x-api-key': apiKey } });
+export const getApiFootballSquad   = (teamId, league, apiKey)            => request(`/apifootball/${league}/squad/${teamId}`,              { headers: { 'x-api-key': apiKey } });
+export const getApiFootballPlayer  = (playerId, league, apiKey)          => request(`/apifootball/${league}/player/${playerId}`,            { headers: { 'x-api-key': apiKey } });
+export const getApiFootballPlayerSearch = (q, league, apiKey, leagueId)  => request(`/apifootball/${league}/search?q=${encodeURIComponent(q)}${leagueId ? `&leagueId=${leagueId}` : ''}`, { headers: { 'x-api-key': apiKey } });
 
 // ── Admin (benötigt x-api-key Header) ──────────────────────────────────────────────
 export const cleanupStats          = (days, adminKey)            => request(`/stats/cleanup?days=${days}`, { method: 'DELETE', headers: { 'x-api-key': adminKey } });

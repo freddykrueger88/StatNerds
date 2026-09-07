@@ -1,7 +1,27 @@
 import React, { useState } from 'react';
 import { useFetch } from '../hooks/useFetch';
+import { useLeagueSeason } from '../hooks/useLeagueSeason';
 import { getScorers, getAssists } from '../services/api';
 import ErrorState from '../components/ErrorState';
+import LeagueUnavailable from '../components/LeagueUnavailable';
+import CsvButton from '../components/CsvButton';
+import PdfButton from '../components/PdfButton';
+import { leagueLabel, leagueSource, seasonLabel } from '../leagues';
+
+const GOAL_COLUMNS = [
+  { key: 'rank',     label: 'Platz' },
+  { key: 'name',     label: 'Spieler' },
+  { key: 'team',     label: 'Verein' },
+  { key: 'goals',    label: 'Tore' },
+  { key: 'penalties', label: 'Elfmeter' },
+  { key: 'ownGoals', label: 'Eigentore' },
+];
+const ASSIST_COLUMNS = [
+  { key: 'rank',     label: 'Platz' },
+  { key: 'name',     label: 'Spieler' },
+  { key: 'team',     label: 'Verein' },
+  { key: 'assists',  label: 'Vorlagen' },
+];
 
 function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, refetch, emptyMsg }) {
   if (loading) return <p style={{ color: '#666', textAlign: 'center', marginTop: '2rem' }}>⏳ Lade...</p>;
@@ -42,19 +62,43 @@ function RankTable({ data, valueKey, valueLabel, icon, theme, loading, error, re
   );
 }
 
-export default function Scorers({ theme }) {
+export default function Scorers({ theme, league }) {
   const [tab, setTab] = useState('goals');
 
   // Lazy: nur den aktiven Tab fetchen
-  const scorersFetch = useFetch(() => getScorers('bl1'),  null, [tab === 'goals']);
-  const assistsFetch = useFetch(() => getAssists('bl1'),  null, [tab === 'assists']);
+  const scorersFetch = useFetch(() => getScorers(league),  null, [tab === 'goals', league]);
+  const assistsFetch = useFetch(() => getAssists(league),  null, [tab === 'assists', league]);
 
   const scorers = Array.isArray(scorersFetch.data) ? scorersFetch.data : [];
   const assists = Array.isArray(assistsFetch.data) ? assistsFetch.data : [];
+  const season  = useLeagueSeason(league);
+
+  if (leagueSource(league) !== 'openligadb') return <LeagueUnavailable league={league} />;
 
   return (
     <div>
-      <h2 style={{ color: theme.primary, marginBottom: '0.8rem' }}>🏆 Statistiken 2025/26</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h2 style={{ color: theme.primary, margin: 0 }}>🏆 Statistiken {season.label} – {leagueLabel(league)}</h2>
+        {tab === 'goals'
+          ? <>
+            <PdfButton title={`Torjäger ${leagueLabel(league)} ${season.label}`} columns={GOAL_COLUMNS}
+              rows={scorers.map((s, i) => ({ rank: i + 1, ...s }))} theme={theme} />
+            <CsvButton filename={`toerjaeger_${league}_${season.fileName}.csv`} columns={GOAL_COLUMNS}
+              rows={scorers.map((s, i) => ({ rank: i + 1, ...s }))} theme={theme} />
+          </>
+          : <>
+            <PdfButton title={`Vorlagen ${leagueLabel(league)} ${season.label}`} columns={ASSIST_COLUMNS}
+              rows={assists.map((s, i) => ({ rank: i + 1, ...s }))} theme={theme} />
+            <CsvButton filename={`vorlagen_${league}_${season.fileName}.csv`} columns={ASSIST_COLUMNS}
+              rows={assists.map((s, i) => ({ rank: i + 1, ...s }))} theme={theme} />
+          </>
+        }
+      </div>
+      {!season.isCurrent && (
+        <p style={{ fontSize: '0.75rem', color: '#dca500', background: '#1f1c0e', border: '1px solid #3a3314', borderRadius: '8px', padding: '0.5rem 0.8rem', marginBottom: '1rem' }}>
+          ⚠️ Für diese Liga ist in der Datenquelle noch keine Saison {seasonLabel()} verfügbar – angezeigt wird die letzte abgeschlossene Saison <strong>{season.label}</strong>. Sobald die neue Saison beginnt, erscheint sie hier automatisch.
+        </p>
+      )}
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #222', paddingBottom: '0.5rem' }}>
         {[{ id: 'goals', label: '⚽ Torjäger' }, { id: 'assists', label: '🤝 Vorlagen' }].map(t => (

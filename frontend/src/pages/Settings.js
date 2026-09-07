@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFavorites } from '../hooks/useFavorites';
+import { useNotifyConfig, NOTIFY_TYPES, NOTIFY_LEAGUES } from '../hooks/useNotifyConfig';
 import { cleanupStats } from '../services/api';
 
 const APP_VERSION = process.env.REACT_APP_VERSION || '0.6.0';
@@ -98,7 +100,7 @@ function useApiKeys() {
   };
 }
 
-export default function Settings({ theme, setTheme }) {
+export default function Settings({ theme, setTheme, mode, setMode, fontSize, setFontSize }) {
   const { keys, setters }               = useApiKeys();
   const [draftKeys, setDraftKeys]       = useState(() => ({ ...keys }));
   const [savedMsg,  setSavedMsg]        = useState({});
@@ -108,6 +110,8 @@ export default function Settings({ theme, setTheme }) {
   const [favoriteTeam, setFavoriteTeam] = useLocalStorage('sn_favorite_team', 'Kein Favorit');
   const [favSaved, setFavSaved]         = useState(false);
   const [country, setCountry]           = useLocalStorage('sn_country', 'DE');
+  const [notifyConfig, setNotifyConfig] = useNotifyConfig();
+  const { favorites }                   = useFavorites();
 
   const saveFavorite = (teamName) => {
     setFavoriteTeam(teamName);
@@ -164,6 +168,63 @@ export default function Settings({ theme, setTheme }) {
         )}
       </div>
 
+      {/* Benachrichtigungen */}
+      <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>🔔 Benachrichtigungen konfigurieren</h3>
+        <span style={lbl}>Aktiviert wird das Polling über den 🔔-Button in der Navigation (nur für OpenLigaDB-Ligen).</span>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ color: '#999', fontSize: '0.78rem', marginBottom: '0.4rem' }}>Ereignis-Typen</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {NOTIFY_TYPES.map(t => {
+              const active = notifyConfig.types.includes(t.id);
+              return (
+                <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem',
+                  background: active ? theme.primary + '22' : '#222', border: `1px solid ${active ? theme.primary : '#2a2a2a'}`,
+                  borderRadius: '8px', padding: '0.5rem 0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                  <input type='checkbox' checked={active} style={{ accentColor: theme.primary }}
+                    onChange={e => {
+                      const types = e.target.checked ? [...notifyConfig.types, t.id] : notifyConfig.types.filter(x => x !== t.id);
+                      setNotifyConfig({ ...notifyConfig, types });
+                    }} />
+                  {t.label}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <div style={{ color: '#999', fontSize: '0.78rem', marginBottom: '0.4rem' }}>Ligen</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {NOTIFY_LEAGUES.map(l => {
+              const active = notifyConfig.leagues.includes(l.id);
+              return (
+                <label key={l.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem',
+                  background: active ? theme.primary + '22' : '#222', border: `1px solid ${active ? theme.primary : '#2a2a2a'}`,
+                  borderRadius: '8px', padding: '0.5rem 0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+                  <input type='checkbox' checked={active} style={{ accentColor: theme.primary }}
+                    onChange={e => {
+                      const leagues = e.target.checked ? [...notifyConfig.leagues, l.id] : notifyConfig.leagues.filter(x => x !== l.id);
+                      setNotifyConfig({ ...notifyConfig, leagues });
+                    }} />
+                  {l.label}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem' }}>
+          <input type='checkbox' checked={!!notifyConfig.onlyFavorites} style={{ accentColor: theme.primary }}
+            onChange={e => setNotifyConfig({ ...notifyConfig, onlyFavorites: e.target.checked })} />
+          <span>
+            Nur Favoriten-Vereine benachrichtigen&nbsp;
+            <span style={{ color: '#555' }}>({favorites.length} Favorit{favorites.length === 1 ? '' : 'en'} per ★ in der Spielübersicht markieren)</span>
+          </span>
+        </label>
+      </div>
+
       {/* Land für TV-Übertragung */}
       <div style={block}>
         <h3 style={{ margin: '0 0 0.3rem 0' }}>🎥 TV-Übertragungsland</h3>
@@ -192,6 +253,59 @@ export default function Settings({ theme, setTheme }) {
             }}><span style={{ marginRight: '6px' }}>{t.emoji}</span>{t.name}</button>
           ))}
         </div>
+      </div>
+
+      {/* Darstellung */}
+      <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>🌗 Darstellung</h3>
+        <span style={lbl}>Heller Bereich, dunkle Akzente – oder klassisch dunkel. Standard folgt deiner System-Präferenz.</span>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {[
+            { id: 'light', label: '☀️ Hell', color: '#f8fafc' },
+            { id: 'dark',  label: '🌙 Dunkel', color: '#0f0f0f' },
+          ].map(m => (
+            <button key={m.id} onClick={() => setMode(m.id)} style={{
+              background: mode === m.id ? theme.primary + '22' : '#222',
+              color: mode === m.id ? '#fff' : '#aaa',
+              border: `2px solid ${mode === m.id ? theme.primary : '#2a2a2a'}`,
+              borderRadius: '8px', padding: '0.5rem 0.9rem', cursor: 'pointer',
+              fontWeight: mode === m.id ? 'bold' : 'normal', fontSize: '0.85rem',
+            }}>{m.label}</button>
+          ))}
+          <button onClick={() => setMode(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')} style={{
+            background: '#222', color: '#aaa',
+            border: '2px solid #2a2a2a', borderRadius: '8px', padding: '0.5rem 0.9rem',
+            cursor: 'pointer', fontSize: '0.85rem',
+          }}>⚙️ System-Präferenz</button>
+        </div>
+        <p style={{ color: '#555', fontSize: '0.75rem', margin: '0.6rem 0 0 0' }}>
+          Gespeichert in <code style={{ color: '#888' }}>sn_mode</code>. Nutze im Hell-Modus ☀️ in der Navigation für einen schnellen Wechsel.
+        </p>
+      </div>
+
+      {/* Schriftgröße */}
+      <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>🔤 Schriftgröße</h3>
+        <span style={lbl}>Skaliert die Textgröße der ganzen App (10px-System nach <code style={{ color: '#888' }}>rem</code>). Auch schnell über „Aa“ in der Navigation.</span>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {[
+            { id: 'small',  label: 'A Klein'   },
+            { id: 'normal', label: 'A Normal'  },
+            { id: 'large',  label: 'A Groß'    },
+          ].map(f => (
+            <button key={f.id} onClick={() => setFontSize(f.id)} style={{
+              background: fontSize === f.id ? theme.primary + '22' : '#222',
+              color: fontSize === f.id ? '#fff' : '#aaa',
+              border: `2px solid ${fontSize === f.id ? theme.primary : '#2a2a2a'}`,
+              borderRadius: '8px', padding: '0.5rem 0.9rem', cursor: 'pointer',
+              fontWeight: fontSize === f.id ? 'bold' : 'normal', fontSize: '0.85rem',
+              fontStyle: 'italic',
+            }}>{f.label}</button>
+          ))}
+        </div>
+        <p style={{ color: '#555', fontSize: '0.75rem', margin: '0.6rem 0 0 0' }}>
+          Gespeichert in <code style={{ color: '#888' }}>sn_font_size</code>. Klein = 14px, Normal = 16px, Groß = 18px Basis.
+        </p>
       </div>
 
       {/* API-Keys */}

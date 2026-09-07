@@ -1,0 +1,21 @@
+# StatNerds – Caddy-Config für Produktion
+# Terminiert HTTPS (Let's Encrypt), leitet auf den nginx-Container (Frontend) weiter.
+# Caddy holt/hält Zertifikate automatisch; PUBLIC_HOST kommt aus der Umgebung der
+# Caddy-Service (docker-compose.prod.yml).
+#
+# Bei lokalen/smoke-Tests: PUBLIC_URL_SCHEME=http + PUBLIC_HOST=localhost →
+# Caddy terminiert internes TLS-Zertifikat statt Let's Encrypt.
+
+https://{$PUBLIC_HOST} {
+	reverse_proxy frontend:80
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security  "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options     "nosniff"
+		X-Frame-Options            "DENY"
+		Referrer-Policy            "strict-origin-when-cross-origin"
+		X-XSS-Protection           "1; mode=block"
+	}
+}

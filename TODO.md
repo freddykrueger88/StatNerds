@@ -59,24 +59,30 @@
 ## 🚀 Nächste Features
 
 ### Liga-Erweiterung
-- [ ] 2. Bundesliga (OpenLigaDB: `bl2`)
-- [ ] Champions League (Football-Data.org)
-- [ ] Premier League, La Liga
-- [ ] Liga-Selector im Frontend
+- [x] 2. Bundesliga (OpenLigaDB: `bl2`)
+- [x] Champions League (API-Football-Adapter, Key in Einstellungen)
+- [x] Premier League (API-Football-Adapter, Key in Einstellungen)
+- [x] La Liga (API-Football-Adapter, Key in Einstellungen)
+- [x] Liga-Selector im Frontend
+- [x] **Frauen-Bundesliga** (OpenLigaDB: `fbl1`, Saison-Fallback auf Vorjahr)
 
 ### Spieler
-- [ ] Spielerprofilseite (Foto, Statistiken, Karriere)
-- [ ] Kader-Übersicht pro Verein
+- [x] Spielerprofilseite (Foto, Saison-Statistiken via API-Football, Key nötig)
+- [x] Kader-Übersicht pro Verein (API-Football-Squad, Key nötig)
 
 ### UX
-- [ ] Animationen & Seitenübergänge
-- [ ] Suche (Spieler, Verein, Spiel)
-- [ ] Share-Button für Spieldetail
+- [x] Animationen & Seitenübergänge (Fade bei View-Wechsel)
+- [x] Suche (Spieler + Verein; Spieler-Suche via API-Football, Key nötig)
+- [x] Share-Button für Spieldetail (Web Share API, Fallback Clipboard)
 
 ### Deployment
-- [ ] HTTPS via nginx + Let’s Encrypt
-- [ ] GitHub Actions: Build + Deploy (Render/Railway)
-- [ ] `docker-compose.prod.yml` mit Resource-Limits
+- [x] HTTPS via Caddy + Let's Encrypt (`docker-compose.prod.yml`, `Caddyfile`)
+- [x] GitHub Actions: Build + Deploy (SSH, `.github/workflows/deploy.yml`)
+- [x] `docker-compose.prod.yml` mit Resource-Limits
+
+### Export
+- [x] CSV-Export (Tabelle, Torjäger, Vorlagen, Vereinsstatistiken)
+- [x] PDF-Export (Browser-Druck – dependency-frei)
 
 ---
 
@@ -86,4 +92,3 @@
 - Tennis, Eishockey
 - Tipp-Spiel für Freunde
 - Spieltag-Rückblick mit KI-Zusammenfassung
-- Export als CSV / PDF

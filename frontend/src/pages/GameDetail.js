@@ -6,7 +6,41 @@ import RefereeBlock from '../components/RefereeBlock';
 import ErrorState from '../components/ErrorState';
 import { useFetch } from '../hooks/useFetch';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useToast } from '../components/Toast';
 import { getH2H, getApiFootballStats } from '../services/api';
+
+function ShareButton({ game, theme }) {
+  const toast = useToast();
+  const t1 = game.team1?.shortName || game.team1?.teamName;
+  const t2 = game.team2?.shortName || game.team2?.teamName;
+  const results = game.matchResults || [];
+  const final   = results.find(r => r.resultTypeID === 2);
+  const score   = final ? `${final.pointsTeam1}:${final.pointsTeam2}` : 'vs';
+  const title   = `⚽ ${t1} – ${t2} ${score}`;
+  const text    = `${title}\nStatNerds-Statistiken & Prognose`;
+
+  const share = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'StatNerds', text });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        toast('🔗 Linktext in die Zwischenablage kopiert.', 'success');
+      } else {
+        toast('Teilen wird von diesem Browser nicht unterstützt.', 'error');
+      }
+    } catch (e) {
+      // User hat geteiltes-Dialog abgebrochen – kein Fehler gewünscht
+    }
+  };
+
+  return (
+    <button onClick={share} title='Spiel teilen' style={{
+      background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}`,
+      borderRadius: '6px', padding: '0.3rem 0.8rem', cursor: 'pointer', fontSize: '0.85rem',
+    }}>🔗 Teilen</button>
+  );
+}
 
 function Timeline({ events }) {
   if (!events?.length) return null;
@@ -33,11 +67,11 @@ function Timeline({ events }) {
   );
 }
 
-function H2HSection({ team1, team2, theme }) {
+function H2HSection({ team1, team2, league, theme }) {
   const { data, loading, error } = useFetch(
-    () => getH2H(team1, team2),
+    () => getH2H(team1, team2, league),
     null,
-    [team1, team2]
+    [team1, team2, league]
   );
   const h2h = Array.isArray(data) ? data : [];
 
@@ -59,7 +93,7 @@ function H2HSection({ team1, team2, theme }) {
   );
 }
 
-export default function GameDetail({ game, theme, onBack }) {
+export default function GameDetail({ game, league, theme, onBack }) {
   const [apiKey] = useLocalStorage('sn_key_api_football', '');
 
   const t1 = game.team1?.shortName || game.team1?.teamName;
@@ -70,16 +104,19 @@ export default function GameDetail({ game, theme, onBack }) {
 
   const hasApiKey  = !!(apiKey && game.externalFixtureId);
   const statsFetch = useFetch(
-    () => getApiFootballStats(game.externalFixtureId, apiKey),
+    () => getApiFootballStats(game.externalFixtureId, league, apiKey),
     null,
-    [game.externalFixtureId, apiKey]
+    [game.externalFixtureId, league, apiKey]
   );
 
   const block = { background: '#1a1a1a', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' };
 
   return (
     <div>
-      <button onClick={onBack} style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}`, borderRadius: '6px', padding: '0.3rem 0.8rem', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.85rem' }}>← Zurück</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+        <button onClick={onBack} style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}`, borderRadius: '6px', padding: '0.3rem 0.8rem', cursor: 'pointer', fontSize: '0.85rem' }}>← Zurück</button>
+        <ShareButton game={game} theme={theme} />
+      </div>
 
       {/* Hero Score */}
       <div style={{ ...block, background: 'linear-gradient(135deg,#1a1a2e,#16213e)', textAlign: 'center', padding: '2rem 1rem' }}>
@@ -118,7 +155,7 @@ export default function GameDetail({ game, theme, onBack }) {
       {/* Prognose */}
       <div style={block}>
         <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: '#aaa' }}>🔮 Prognose</h4>
-        <PredictionBlock team1={t1} team2={t2} fixtureId={game.externalFixtureId} theme={theme} />
+        <PredictionBlock league={league} team1={t1} team2={t2} fixtureId={game.externalFixtureId} theme={theme} />
       </div>
 
       {/* Live-Stats */}
@@ -150,7 +187,7 @@ export default function GameDetail({ game, theme, onBack }) {
 
       {/* H2H */}
       <div style={block}>
-        <H2HSection team1={t1} team2={t2} theme={theme} />
+        <H2HSection team1={t1} team2={t2} league={league} theme={theme} />
       </div>
     </div>
   );

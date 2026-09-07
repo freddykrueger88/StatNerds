@@ -7,7 +7,7 @@ import { getPrediction, getPredictionXG } from '../services/api';
  * compact=true: nur die Bar ohne Mode-Umschalter und xG-Details (für GameCard Hero)
  * compact=false/undefined: vollständig mit Mode-Tabs (für GameDetail)
  */
-export default function PredictionBlock({ team1, team2, fixtureId, theme, compact = false }) {
+export default function PredictionBlock({ team1, team2, fixtureId, theme, compact = false, league = 'bl1' }) {
   const [mode, setMode] = useState('basic');
   const [apiKey] = useLocalStorage('sn_key_api_football', '');
 
@@ -18,10 +18,10 @@ export default function PredictionBlock({ team1, team2, fixtureId, theme, compac
       if (!team1 || !team2) return Promise.resolve(null);
       return mode === 'xg' && hasXG
         ? getPredictionXG(fixtureId, apiKey)
-        : getPrediction(team1, team2);
+        : getPrediction(team1, team2, league);
     },
     null,
-    [team1, team2, fixtureId, mode, apiKey]
+    [team1, team2, fixtureId, mode, apiKey, league]
   );
 
   if (!pred) return null;

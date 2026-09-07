@@ -51,8 +51,11 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ── Routen ─────────────────────────────────────────────────────────────
+app.use('/api/meta',        require('./routes/meta'));
+app.use('/api/espn',        require('./routes/espn'));
 app.use('/api/games',       require('./routes/games'));
 app.use('/api/teams',       require('./routes/teams'));
+app.use('/api/players',     require('./routes/players'));
 app.use('/api/teamstats',   require('./routes/teamstats'));
 app.use('/api/prediction',  require('./routes/prediction'));
 app.use('/api/apifootball', require('./routes/apifootball'));

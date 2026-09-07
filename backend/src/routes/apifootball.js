@@ -32,6 +32,70 @@ function resolveAdapter(req, res) {
   }
 }
 
+// ── GET /api/apifootball/:league/teams ─────────────────────────────────────
+// Mannschaften der Liga (opt. leagueId-Override, z.B. 79 für die 2. Bundesliga)
+router.get('/:league/teams', async (req, res, next) => {
+  const adapter = resolveAdapter(req, res);
+  if (!adapter) return;
+  const leagueId = req.query.leagueId;
+  const cacheKey = `apif_${req.params.league}_teams_${leagueId || 'default'}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return res.json(cached);
+  try {
+    const data = await adapter.getTeams(leagueId);
+    cache.set(cacheKey, data, 24 * 60 * 60 * 1000);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/apifootball/:league/squad/:teamId ──────────────────────────────
+router.get('/:league/squad/:teamId', async (req, res, next) => {
+  const adapter = resolveAdapter(req, res);
+  if (!adapter) return;
+  const { teamId, league } = req.params;
+  const cacheKey = `apif_${league}_squad_${teamId}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return res.json(cached);
+  try {
+    const data = await adapter.getSquad(teamId);
+    cache.set(cacheKey, data, 24 * 60 * 60 * 1000);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/apifootball/:league/player/:playerId ───────────────────────────
+router.get('/:league/player/:playerId', async (req, res, next) => {
+  const adapter = resolveAdapter(req, res);
+  if (!adapter) return;
+  const { playerId, league } = req.params;
+  const cacheKey = `apif_${league}_player_${playerId}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return res.json(cached);
+  try {
+    const data = await adapter.getPlayer(playerId);
+    cache.set(cacheKey, data, 24 * 60 * 60 * 1000);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+// ── GET /api/apifootball/:league/search?q=… ──────────────────────────────────
+// Spieler-Suche (API-Football /players?search=), opt. leagueId-Override
+router.get('/:league/search', async (req, res, next) => {
+  const adapter = resolveAdapter(req, res);
+  if (!adapter) return;
+  const q = (req.query.q || '').trim();
+  if (!q) return res.status(400).json({ error: 'q Parameter fehlt' });
+  const leagueId = req.query.leagueId;
+  const cacheKey = `apif_${req.params.league}_search_${leagueId || 'default'}_${q.toLowerCase()}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return res.json(cached);
+  try {
+    const data = await adapter.searchPlayers(q, leagueId);
+    cache.set(cacheKey, data, 10 * 60 * 1000);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
 // ── GET /api/apifootball/:league/live ──────────────────────────────────
 router.get('/:league/live', async (req, res, next) => {
   const adapter = resolveAdapter(req, res);

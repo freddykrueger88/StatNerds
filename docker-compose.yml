@@ -32,7 +32,7 @@ services:
       ADMIN_API_KEY:    ${ADMIN_API_KEY:-}
       API_FOOTBALL_KEY: ${API_FOOTBALL_KEY:-}
       THE_SPORTSDB_KEY: ${THE_SPORTSDB_KEY:-}
-      FOOTBALL_DATA_KEY:${FOOTBALL_DATA_KEY:-}
+      FOOTBALL_DATA_KEY: ${FOOTBALL_DATA_KEY:-}
     depends_on:
       db:
         condition: service_healthy

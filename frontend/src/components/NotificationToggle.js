@@ -1,9 +1,12 @@
 import React from 'react';
 import useNotifications from '../hooks/useNotifications';
+import { useNotifyConfig } from '../hooks/useNotifyConfig';
 import { useToast } from './Toast';
+import { leagueSource } from '../leagues';
 
-export default function NotificationToggle({ theme }) {
-  const { permission, watching, toggle } = useNotifications();
+export default function NotificationToggle({ theme, league }) {
+  const [notifyConfig] = useNotifyConfig();
+  const { permission, watching, toggle } = useNotifications(league, notifyConfig);
   const toast = useToast();
 
   const handleToggle = async () => {
@@ -11,12 +14,16 @@ export default function NotificationToggle({ theme }) {
       toast('Benachrichtigungen sind im Browser blockiert. Bitte in den Browser-Einstellungen freigeben.', 'error', 5000);
       return;
     }
+    if (!watching && !(notifyConfig?.types?.length)) {
+      toast('Bitte zuerst in den Einstellungen einen Benachrichtigungstyp wählen (⚙️ → Benachrichtigungen).', 'info', 5000);
+      return;
+    }
     const result = await toggle();
-    if (result) toast('🔔 Tor-Benachrichtigungen aktiviert!', 'success');
+    if (result) toast('🔔 Benachrichtigungen aktiviert!', 'success');
     else toast('🔕 Benachrichtigungen deaktiviert.', 'info');
   };
 
-  if (typeof Notification === 'undefined') return null;
+  if (typeof Notification === 'undefined' || leagueSource(league) !== 'openligadb') return null;
 
   return (
     <button onClick={handleToggle} title={watching ? 'Benachrichtigungen deaktivieren' : 'Bei Toren benachrichtigen'} style={{

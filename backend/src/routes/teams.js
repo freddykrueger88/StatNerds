@@ -90,6 +90,13 @@ router.get('/:sportsdbId', async (req, res, next) => {
       founded: t.intFormedYear, league: t.strLeague,
       website: t.strWebsite, facebook: t.strFacebook, instagram: t.strInstagram,
       descriptionDE: t.strDescriptionDE, descriptionEN: t.strDescriptionEN,
+      players: Array.isArray(t.players) ? t.players.map(pl => ({
+        id:     pl.idPlayer,
+        name:   pl.strPlayer,
+        thumb:  pl.strCutout || pl.strThumb,
+        position: pl.strPosition,
+        number: pl.intSquadNumber || pl.strNumber,
+      })) : [],
     };
     cache.set(cacheKey, team, 24 * 60 * 60 * 1000);
     res.json(team);

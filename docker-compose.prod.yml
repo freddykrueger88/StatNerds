@@ -1,0 +1,95 @@
+# Produktion: HTTPS via Caddy (hält Let's Encrypt-Zertifikate automatisch aktuell), 
+# keine Dev-volumes, Resource-Limits. Nicht mit docker-compose.yml mischen –
+# entweder Dev (docker compose) ODER Prod (docker compose -f docker-compose.prod.yml).
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       statnerds
+      POSTGRES_USER:     statnerds
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?DB-Passwort im .env setzen}
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    # KEINE Host-Port-Mapping im Prod (DB nicht von außen erreichbar)
+    expose:
+      - '5432'
+    healthcheck:
+      test:     ['CMD-SHELL', 'pg_isready -U statnerds']
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
+
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - '8000'
+    environment:
+      DATABASE_URL:      postgresql://statnerds:${POSTGRES_PASSWORD:?}@db:5432/statnerds
+      NODE_ENV:          production
+      ALLOWED_ORIGINS:   ${PUBLIC_URL:?öffentliche URL (https://…) im .env setzen}
+      ADMIN_API_KEY:     ${ADMIN_API_KEY:-}
+      API_FOOTBALL_KEY:  ${API_FOOTBALL_KEY:-}
+      THE_SPORTSDB_KEY:  ${THE_SPORTSDB_KEY:-}
+      FOOTBALL_DATA_KEY: ${FOOTBALL_DATA_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Im Prod KEIN ./backend/src mount – das Image ist der Singleton-Build.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512m
+
+  frontend:
+    build:
+      context:    ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - '80'
+    depends_on:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256m
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      # Im .env: PUBLIC_URL=http://dein-domain.de  →  PUBLIC_URL_SCHEME=https, PUBLIC_HOST=dein-domain.de
+      PUBLIC_URL_SCHEME: ${PUBLIC_URL_SCHEME:-https}
+      PUBLIC_HOST:       ${PUBLIC_HOST:?Domain (z.B. stats.example.de) im .env setzen}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128m
+
+volumes:
+  dbdata:
+  caddy_data:
+  caddy_config:
