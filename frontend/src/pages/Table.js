@@ -7,6 +7,7 @@ import LeagueUnavailable from '../components/LeagueUnavailable';
 import CsvButton from '../components/CsvButton';
 import PdfButton from '../components/PdfButton';
 import NbaStandings from '../components/sport/NbaStandings';
+import NflStandings from '../components/sport/NflStandings';
 import TennisRankings from '../components/sport/TennisRankings';
 import NhlStandings from '../components/sport/NhlStandings';
 import F1Standings from '../components/sport/F1Standings';
@@ -31,6 +32,7 @@ export default function Table({ theme, league }) {
   const season = useLeagueSeason(league);
 
   const source = leagueSource(league);
+  if (league === 'nfl') return <NflStandings theme={theme} />;
   if (source === 'espn') {
     if (league === 'nba') return <NbaStandings theme={theme} />;
     return <TennisRankings theme={theme} league={league} />;

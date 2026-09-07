@@ -1,6 +1,6 @@
 // Zentrale Liga-Liste – globaler Liga-State in App.js (localStorage 'sn_league')
 // source: 'openligadb' = OpenLigaDB (bl1/bl2/fbl1/bbl), 'apifootball' = API-Football (Key nötig),
-//         'espn' = ESPN Public API (keyless; NBA, ATP, WTA), 'nhl' = NHL API (keyless),
+//         'espn' = ESPN Public API (keyless; NBA, ATP, WTA, NFL), 'nhl' = NHL API (keyless),
 //         'f1' = Jolpica/Ergast F1 API (keyless)
 export const SPORTS = [
   { id: 'football',   label: '⚽ Fußball'   },
@@ -8,6 +8,7 @@ export const SPORTS = [
   { id: 'tennis',     label: '🎾 Tennis'    },
   { id: 'hockey',     label: '🏒 Eishockey' },
   { id: 'formel1',    label: '🏎️ Formel 1'  },
+  { id: 'americanfootball', label: '🏈 NFL' },
 ];
 
 export const LEAGUES = [
@@ -23,6 +24,7 @@ export const LEAGUES = [
   { id: 'wta',             label: 'WTA Tour',          sport: 'tennis',     source: 'espn' },
   { id: 'nhl',             label: 'National Hockey League', sport: 'hockey', source: 'nhl' },
   { id: 'f1',              label: 'Formel 1',          sport: 'formel1',    source: 'f1' },
+  { id: 'nfl',             label: 'National Football League', sport: 'americanfootball', source: 'espn' },
 ];
 
 export const leagueLabel = (id) => LEAGUES.find(l => l.id === id)?.label || id;
@@ -42,6 +44,7 @@ export const sportColor = (sport) => {
   if (sport === 'tennis')     return '#4ade80';
   if (sport === 'hockey')     return '#60a5fa';
   if (sport === 'formel1')    return '#f87171';
+  if (sport === 'americanfootball') return '#a3e635';
   return null; // football → Theme bleibt maßgeblich
 };
 

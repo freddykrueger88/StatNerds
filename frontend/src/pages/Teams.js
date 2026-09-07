@@ -7,6 +7,7 @@ import ErrorState from '../components/ErrorState';
 import LeagueUnavailable from '../components/LeagueUnavailable';
 import { TeamCard, TeamDetail, PlayerDetail, APIF } from '../components/squad';
 import NbaTeams from '../components/sport/NbaTeams';
+import NflTeams from '../components/sport/NflTeams';
 import TennisRankings from '../components/sport/TennisRankings';
 import NhlTeams from '../components/sport/NhlTeams';
 import F1Standings from '../components/sport/F1Standings';
@@ -31,6 +32,7 @@ export default function Teams({ theme, league }) {
   const teamList = Array.isArray(listFetch.data) ? listFetch.data : [];
 
   const source = leagueSource(league);
+  if (league === 'nfl') return <NflTeams theme={theme} />;
   if (source === 'espn') {
     if (league === 'nba') return <NbaTeams theme={theme} />;
     return <TennisRankings theme={theme} league={league} />;

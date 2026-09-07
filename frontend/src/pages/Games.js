@@ -15,6 +15,7 @@ import { useLeagueSeason } from '../hooks/useLeagueSeason';
 import { leagueLabel, leagueSource, seasonLabel } from '../leagues';
 import EspnGames from '../components/sport/EspnGames';
 import NhlGames from '../components/sport/NhlGames';
+import NflGames from '../components/sport/NflGames';
 import F1Schedule from '../components/sport/F1Schedule';
 
 // ── CountdownBadge ───────────────────────────────────────────────────────────────
@@ -358,6 +359,7 @@ function OpenLigaDbGames({ theme, league }) {
 
 export default function Games({ theme, league }) {
   const source = leagueSource(league);
+  if (league === 'nfl')    return <NflGames theme={theme} />;
   if (source === 'espn')     return <EspnGames theme={theme} league={league} />;
   if (source === 'nhl')      return <NhlGames theme={theme} />;
   if (source === 'f1')       return <F1Schedule theme={theme} />;

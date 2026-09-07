@@ -79,6 +79,10 @@ export const getF1Results          = (round, season)             => request(`/f1
 export const getF1PitStops         = (round, season)             => request(`/f1/lap-times/${round}${season ? `?season=${season}` : ''}`);
 export const getNbaStandings       = ()                          => request('/espn/nba/standings');
 export const getNbaTeams           = ()                          => request('/espn/nba/teams');
+export const getNflCurrent         = ()                          => request('/espn/nfl/current');
+export const getNflStandings       = ()                          => request('/espn/nfl/standings');
+export const getNflTeams           = ()                          => request('/espn/nfl/teams');
+export const getNflLeaders         = (category)                  => request(`/espn/nfl/leaders?category=${category}&limit=20`);
 export const getTennisRankings     = (league)                    => request(`/espn/${league}/rankings`);
 export const getTennisPlayer       = (league, playerId)          => request(`/espn/${league}/player/${playerId}`);
 
