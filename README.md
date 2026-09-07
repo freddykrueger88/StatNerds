@@ -100,7 +100,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-App läuft unter: **http://localhost:3000**  
+App läuft unter: **http://localhost:3000**
 Backend API: **http://localhost:8000**
 
 ### .env Konfiguration
