@@ -255,14 +255,15 @@ router.get('/:league/teamform', validateLeague, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── GET /api/games/:league/scorers ───────────────────────────────────────
+// ── GET /api/games/:league/scorers[?season=YYYY] ────────────────────────
 router.get('/:league/scorers', validateLeague, async (req, res, next) => {
   const { league } = req.params;
   try {
-    const key    = `scorers_${league}`;
+    const season = parseInt(req.query.season, 10) || null;
+    const key    = season ? `scorers_${league}_${season}` : `scorers_${league}`;
     const cached = cache.get(key);
     if (cached) return res.json(cached);
-    const all    = await loadAllMatchdays(league);
+    const all    = season ? await loadSeasonMatchdays(league, season) : await loadAllMatchdays(league);
     const map    = buildScorerMap(all);
     const sorted = Object.values(map).filter(s => s.goals > 0).sort((a, b) => b.goals - a.goals).slice(0, 30);
     cache.set(key, sorted, 15 * 60 * 1000);
@@ -270,14 +271,15 @@ router.get('/:league/scorers', validateLeague, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── GET /api/games/:league/assists ───────────────────────────────────────
+// ── GET /api/games/:league/assists[?season=YYYY] ────────────────────────
 router.get('/:league/assists', validateLeague, async (req, res, next) => {
   const { league } = req.params;
   try {
-    const key    = `assists_${league}`;
+    const season = parseInt(req.query.season, 10) || null;
+    const key    = season ? `assists_${league}_${season}` : `assists_${league}`;
     const cached = cache.get(key);
     if (cached) return res.json(cached);
-    const all       = await loadAllMatchdays(league);
+    const all       = season ? await loadSeasonMatchdays(league, season) : await loadAllMatchdays(league);
     const assistMap = {};
     all.forEach(match => {
       (match.goals || []).forEach(goal => {

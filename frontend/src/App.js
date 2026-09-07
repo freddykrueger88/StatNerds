@@ -4,6 +4,7 @@ import Dashboard  from './pages/Dashboard';
 import Games      from './pages/Games';
 import Table      from './pages/Table';
 import Scorers    from './pages/Scorers';
+import TopRankings from './pages/TopRankings';
 import Teams      from './pages/Teams';
 import TeamStats  from './pages/TeamStats';
 import Search     from './pages/Search';
@@ -35,6 +36,7 @@ const NAV = {
     { id: 'games',      label: '⚽',   tKey: 'nav.games'        },
     { id: 'table',      label: '📊',   tKey: 'nav.table'        },
     { id: 'scorers',    label: '🥅',   tKey: 'nav.scorers'      },
+    { id: 'toprankings', label: '🏅',  tKey: 'nav.toprankings',  mobile: false },
     { id: 'compare',    label: '⚖️',  tKey: 'nav.compare',     mobile: false },
     { id: 'seasoncmp',  label: '📅',   tKey: 'nav.seasoncmp',   mobile: false },
     { id: 'search',     label: '🔍',   tKey: 'nav.search',      mobile: false },
@@ -165,6 +167,7 @@ const [focusMode, setFocusMode] = useLocalStorage('sn_focus_mode', false);
         {effectiveView === 'games'     && <Games     theme={effectiveTheme} league={league} />}
         {effectiveView === 'table'     && <Table     theme={effectiveTheme} league={league} />}
         {effectiveView === 'scorers'   && <Scorers   theme={effectiveTheme} league={league} />}
+        {effectiveView === 'toprankings' && <TopRankings theme={effectiveTheme} league={league} />}
         {effectiveView === 'search'    && <Search    theme={effectiveTheme} league={league} />}
         {effectiveView === 'teamstats' && <TeamStats theme={effectiveTheme} league={league} />}
         {effectiveView === 'teams'     && <Teams     theme={effectiveTheme} league={league} />}

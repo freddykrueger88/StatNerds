@@ -30,8 +30,8 @@ export const getTableSeason        = (league, season)            => request(`/ga
 export const getAvailableSeasons   = (league = 'bl1')            => request(`/games/${league}/seasons`);
 export const getTeamWindow         = (league = 'bl1', team)      => request(`/games/${league}/teamwindow?team=${encodeURIComponent(team)}`);
 export const getTeamForm           = (league = 'bl1', team)      => request(`/games/${league}/teamform?team=${encodeURIComponent(team)}`);
-export const getScorers            = (league = 'bl1')            => request(`/games/${league}/scorers`);
-export const getAssists            = (league = 'bl1')            => request(`/games/${league}/assists`);
+export const getScorers            = (league = 'bl1', season)     => request(`/games/${league}/scorers${season ? `?season=${season}` : ''}`);
+export const getAssists            = (league = 'bl1', season)     => request(`/games/${league}/assists${season ? `?season=${season}` : ''}`);
 export const getWeeklySummary      = (leagues, teams, days = 7)  => {
   const q1 = Array.isArray(leagues) && leagues.length ? `league=${encodeURIComponent(leagues.join(','))}` : '';
   const q2 = Array.isArray(teams)   && teams.length   ? `teams=${encodeURIComponent(teams.join(','))}` : '';

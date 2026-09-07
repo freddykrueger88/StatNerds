@@ -4,6 +4,7 @@ export default {
     games: 'Partidos',
     table: 'Tabla',
     scorers: 'Stats',
+    toprankings: 'Top-Rankings',
     compare: 'Comparar',
     seasoncmp: 'Temporadas',
     search: 'Buscar',

@@ -4,6 +4,7 @@ export default {
     games: 'Spiele',
     table: 'Tabelle',
     scorers: 'Stats',
+    toprankings: 'Top-Rankings',
     compare: 'Vergleich',
     seasoncmp: 'Saisons',
     search: 'Suche',
