@@ -9,6 +9,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useToast } from '../components/Toast';
 import { PlayerDetail, APIF } from '../components/squad';
 import { getH2H, getApiFootballStats, getApiFootballPlayerSearch } from '../services/api';
+import XgChart from '../components/XgChart';
 
 function ShareButton({ game, theme }) {
   const toast = useToast();
@@ -230,6 +231,9 @@ export default function GameDetail({ game, league, theme, onBack }) {
                 <StatsBar label='🟥 Rot'          home={stats.home?.redCards}     away={stats.away?.redCards}      homeColor='#f87171' />
                 <StatsBar label='Pässe'           home={stats.home?.passes}        away={stats.away?.passes}        homeColor={theme.primary} />
                 <StatsBar label='Passgenauigkeit' home={stats.home?.passAccuracy}  away={stats.away?.passAccuracy}  homeColor={theme.primary} />
+                {stats.home?.xG != null && stats.away?.xG != null && (stats.home?.xG > 0 || stats.away?.xG > 0) && (
+                  <XgChart home={stats.home} away={stats.away} events={stats.events} theme={theme} />
+                )}
                 {stats.events?.length > 0 && <Timeline events={stats.events} onPlayerClick={(id, name) => openPlayer(id, name)} />}
               </div>
             );
