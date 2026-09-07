@@ -4,6 +4,7 @@
 
 # Node
 node_modules/
+package-lock.json
 
 # DB-Daten (lokal gemounted) & Postgres
 db/data/
