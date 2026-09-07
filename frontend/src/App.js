@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Dashboard  from './pages/Dashboard';
 import Games      from './pages/Games';
 import Table      from './pages/Table';
@@ -29,37 +30,38 @@ const LIGHT_FILTER = 'invert(1) hue-rotate(180deg)';
 
 const NAV = {
   football: [
-    { id: 'dashboard',  label: '🏠',   full: 'Start'    },
-    { id: 'games',      label: '⚽',   full: 'Spiele'   },
-    { id: 'table',      label: '📊',   full: 'Tabelle'  },
-    { id: 'scorers',    label: '🥅',   full: 'Stats'    },
-    { id: 'compare',    label: '⚖️',  full: 'Vergleich', mobile: false },
-    { id: 'seasoncmp',  label: '📅',   full: 'Saisons',  mobile: false },
-    { id: 'search',     label: '🔍',   full: 'Suche',    mobile: false },
-    { id: 'teamstats',  label: '📈',   full: 'Vereine',  mobile: false },
-    { id: 'teams',      label: '🏙️',  full: 'Info'     },
-    { id: 'history',    label: '🕘',   full: 'Verlauf',  mobile: false },
-    { id: 'settings',   label: '⚙️',   full: ''         },
+    { id: 'dashboard',  label: '🏠',   tKey: 'nav.dashboard'    },
+    { id: 'games',      label: '⚽',   tKey: 'nav.games'        },
+    { id: 'table',      label: '📊',   tKey: 'nav.table'        },
+    { id: 'scorers',    label: '🥅',   tKey: 'nav.scorers'      },
+    { id: 'compare',    label: '⚖️',  tKey: 'nav.compare',     mobile: false },
+    { id: 'seasoncmp',  label: '📅',   tKey: 'nav.seasoncmp',   mobile: false },
+    { id: 'search',     label: '🔍',   tKey: 'nav.search',      mobile: false },
+    { id: 'teamstats',  label: '📈',   tKey: 'nav.teamstats',   mobile: false },
+    { id: 'teams',      label: '🏙️',  tKey: 'nav.teams'        },
+    { id: 'history',    label: '🕘',   tKey: 'nav.history',     mobile: false },
+    { id: 'settings',   label: '⚙️',   tKey: 'nav.settings'     },
   ],
   basketball: [
-    { id: 'dashboard',  label: '🏠',   full: 'Start'    },
-    { id: 'games',      label: '🏀',   full: 'Spiele'   },
-    { id: 'table',      label: '📊',   full: 'Tabelle'  },
-    { id: 'teams',      label: '🏙️',  full: 'Teams'    },
-    { id: 'history',    label: '🕘',   full: 'Verlauf'  },
-    { id: 'settings',   label: '⚙️',   full: ''         },
+    { id: 'dashboard',  label: '🏠',   tKey: 'nav.dashboard'    },
+    { id: 'games',      label: '🏀',   tKey: 'nav.games'        },
+    { id: 'table',      label: '📊',   tKey: 'nav.table'        },
+    { id: 'teams',      label: '🏙️',  tKey: 'nav.teams'        },
+    { id: 'history',    label: '🕘',   tKey: 'nav.history',     mobile: false },
+    { id: 'settings',   label: '⚙️',   tKey: 'nav.settings'     },
   ],
   tennis: [
-    { id: 'dashboard',  label: '🏠',   full: 'Start'    },
-    { id: 'games',      label: '🎾',   full: 'Spiele'   },
-    { id: 'table',      label: '🏆',   full: 'Rangliste' },
-    { id: 'teams',      label: '👤',   full: 'Spieler'  },
-    { id: 'history',    label: '🕘',   full: 'Verlauf'  },
-    { id: 'settings',   label: '⚙️',   full: ''         },
+    { id: 'dashboard',  label: '🏠',   tKey: 'nav.dashboard'    },
+    { id: 'games',      label: '🎾',   tKey: 'nav.games'        },
+    { id: 'table',      label: '🏆',   tKey: 'nav.tennis_table' },
+    { id: 'teams',      label: '👤',   tKey: 'nav.teams'        },
+    { id: 'history',    label: '🕘',   tKey: 'nav.history',     mobile: false },
+    { id: 'settings',   label: '⚙️',   tKey: 'nav.settings'     },
   ],
 };
 
 export default function App() {
+  const { t } = useTranslation();
   const [view, setView] = useState('dashboard');
   const [theme, setTheme] = useLocalStorage('sn_theme', DEFAULT_THEME);
   const [league, setLeague] = useLocalStorage('sn_league', 'bl1');
@@ -114,7 +116,7 @@ useEffect(() => {
               fontWeight: effectiveView === n.id ? 'bold' : 'normal', fontSize: '0.82rem'
             }}>
               <span>{n.label}</span>
-              {n.full && <span className='nav-label' style={{ marginLeft: '0.2rem' }}>{n.full}</span>}
+              {n.tKey && <span className='nav-label' style={{ marginLeft: '0.2rem' }}>{t(n.tKey)}</span>}
             </button>
           ))}
         </div>
@@ -176,7 +178,7 @@ useEffect(() => {
             color: effectiveView === n.id ? effectiveTheme.primary : '#555',
           }}>
             <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{n.label}</span>
-            {n.full && <span style={{ fontSize: '0.5rem', fontWeight: effectiveView === n.id ? 'bold' : 'normal' }}>{n.full}</span>}
+            {n.tKey && <span style={{ fontSize: '0.5rem', fontWeight: effectiveView === n.id ? 'bold' : 'normal' }}>{t(n.tKey)}</span>}
           </button>
         ))}
       </nav>

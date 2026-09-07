@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useFavorites } from '../hooks/useFavorites';
 import { useNotifyConfig, NOTIFY_TYPES, NOTIFY_LEAGUES } from '../hooks/useNotifyConfig';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../hooks/useLanguage';
 import { cleanupStats } from '../services/api';
 
 const APP_VERSION = process.env.REACT_APP_VERSION || '0.6.0';
@@ -102,6 +104,8 @@ function useApiKeys() {
 }
 
 export default function Settings({ theme, setTheme, mode, setMode, fontSize, setFontSize }) {
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
   const { keys, setters }               = useApiKeys();
   const [draftKeys, setDraftKeys]       = useState(() => ({ ...keys }));
   const [savedMsg,  setSavedMsg]        = useState({});
@@ -141,13 +145,14 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
 
   const handleAuth = async (kind) => {
     if (!authEmail.trim() || authPass.length < 8) {
-      setAuthMsg('❌ Gültige E-Mail + Passwort (min. 8 Zeichen) erforderlich.');
+      setAuthMsg('❌ ' + t('accounts.invalidForm'));
       return;
     }
     const result = kind === 'register'
       ? await auth.register(authEmail, authPass, localSettings(), serverSetters)
       : await auth.login(authEmail, authPass, localSettings(), serverSetters);
-    setAuthMsg(result.ok ? '✅ ' + result.message : '❌ ' + result.message);
+    setAuthMsg(result.ok ? '✅ ' + (result.messageKey ? t(result.messageKey) : result.message)
+      : '❌ ' + result.message);
     if (result.ok) { setAuthPass(''); }
   };
 
@@ -184,56 +189,77 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
 
   return (
     <div style={{ maxWidth: '700px', paddingBottom: '3rem' }}>
-      <h2 style={{ color: theme.primary }}>⚙️ Einstellungen</h2>
+      <h2 style={{ color: theme.primary }}>{t('settings.title')}</h2>
+
+      {/* Sprache (Issue #16) */}
+      <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>{t('settings.language')}</h3>
+        <span style={lbl}>{t('settings.languageHint')}</span>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {[
+            { id: 'de', label: '🇩🇪 Deutsch' },
+            { id: 'en', label: '🇬🇧 English' },
+            { id: 'es', label: '🇪🇸 Español' },
+          ].map(l => (
+            <button key={l.id} onClick={() => setLanguage(l.id)} style={{
+              background: language === l.id ? theme.primary + '22' : '#222',
+              color: language === l.id ? '#fff' : '#aaa',
+              border: `2px solid ${language === l.id ? theme.primary : '#2a2a2a'}`,
+              borderRadius: '8px', padding: '0.5rem 0.9rem', cursor: 'pointer',
+              fontWeight: language === l.id ? 'bold' : 'normal', fontSize: '0.85rem',
+            }}>{l.label}</button>
+          ))}
+        </div>
+      </div>
 
       {/* Benutzerkonto (Issue #15) */}
       <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
-        <h3 style={{ margin: '0 0 0.3rem 0' }}>👤 Benutzerkonto</h3>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>{t('settings.account')}</h3>
         <span style={lbl}>
           {auth.loggedIn
-            ? <>Angemeldet als <strong>{auth.email}</strong> – Einstellungen &amp; Favoriten werden auf dem Server gespeichert und geräteübergreifend synchronisiert.</>
-            : <>Optional: Konto erstellen, um Einstellungen &amp; Favoriten geräteübergreifend zu speichern. Ohne Konto bleibt die App im <strong>Gast-Modus</strong> (alles nur lokal).</>}
+            ? <>{t('settings.accountLoggedIn')} <strong>{auth.email}</strong>.</>
+            : <span dangerouslySetInnerHTML={{ __html: t('settings.accountLoggedOut') }} />}
         </span>
 
         {!auth.loggedIn ? (
           <>
             <div style={{ display: 'grid', gap: '0.5rem', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <input type='email' placeholder='E-Mail-Adresse' value={authEmail}
+                <input type='email' placeholder={t('settings.emailPlaceholder')} value={authEmail}
                   onChange={e => setAuthEmail(e.target.value)}
                   style={{ background: '#111', color: '#fff', border: `1px solid ${theme.primary}44`, borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.9rem' }} />
-                <input type='password' placeholder='Passwort (min. 8 Zeichen)' value={authPass}
+                <input type='password' placeholder={t('settings.passwordPlaceholder')} value={authPass}
                   onChange={e => setAuthPass(e.target.value)}
                   style={{ background: '#111', color: '#fff', border: `1px solid ${theme.primary}44`, borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.9rem' }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <button onClick={() => handleAuth('login')} disabled={auth.busy}
                   style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem 1rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                  {auth.busy ? '…' : '🔑 Anmelden'}
+                  {auth.busy ? '…' : t('settings.login')}
                 </button>
                 <button onClick={() => handleAuth('register')} disabled={auth.busy}
                   style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}66`, borderRadius: '8px', padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                  {auth.busy ? '…' : '➕ Konto erstellen'}
+                  {auth.busy ? '…' : t('settings.register')}
                 </button>
               </div>
             </div>
             <p style={{ color: '#555', fontSize: '0.78rem', margin: '0.5rem 0 0 0' }}>
-              🔒 Passwörter werden mit scrypt gehasht und nie im Klartext gespeichert.
+              {t('settings.passwordNote')}
             </p>
           </>
         ) : (
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
             <button onClick={async () => { const r = await auth.syncToServer(localSettings()); setAuthMsg(r.ok ? '✅ ' + r.message : '❌ ' + r.message); }}
               style={{ background: theme.primary, color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>
-              ☁️ Einstellungen hochladen
+              {t('settings.syncUp')}
             </button>
             <button onClick={async () => { const r = await auth.syncFromServer(serverSetters); setAuthMsg(r.ok ? '✅ ' + r.message : '❌ ' + r.message); }}
               style={{ background: 'transparent', color: theme.primary, border: `1px solid ${theme.primary}66`, borderRadius: '8px', padding: '0.5rem 1rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-              ☁️ Vom Server laden
+              {t('settings.syncDown')}
             </button>
-            <button onClick={() => { auth.logout(); setAuthMsg('👋 Abgemeldet. Alles läuft wieder lokal (Gast-Modus).'); }}
+            <button onClick={() => { auth.logout(); setAuthMsg(t('accounts.loggedOut')); }}
               style={{ background: 'transparent', color: '#f87171', border: '1px solid #f8717166', borderRadius: '8px', padding: '0.5rem 1rem', cursor: 'pointer', fontSize: '0.85rem' }}>
-              🚪 Abmelden
+              {t('settings.logout')}
             </button>
           </div>
         )}
@@ -242,8 +268,8 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
 
       {/* Lieblingsverein */}
       <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
-        <h3 style={{ margin: '0 0 0.3rem 0' }}>❤️ Mein Verein</h3>
-        <span style={lbl}>Wähle deinen Lieblingsverein – das Theme passt sich automatisch an</span>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>{t('settings.myClub')}</h3>
+        <span style={lbl}>{t('settings.myClubHint')}</span>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <select value={favoriteTeam} onChange={e => saveFavorite(e.target.value)}
             style={{ flex: 1, background: '#111', color: '#fff', border: `1px solid ${theme.primary}44`, borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.95rem', cursor: 'pointer' }}>
@@ -262,11 +288,11 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
 
       {/* Benachrichtigungen */}
       <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
-        <h3 style={{ margin: '0 0 0.3rem 0' }}>🔔 Benachrichtigungen konfigurieren</h3>
-        <span style={lbl}>Aktiviert wird das Polling über den 🔔-Button in der Navigation (nur für OpenLigaDB-Ligen).</span>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>{t('settings.notifications')}</h3>
+        <span style={lbl}>{t('settings.notificationsHint')}</span>
 
         <div style={{ marginBottom: '1rem' }}>
-          <div style={{ color: '#999', fontSize: '0.78rem', marginBottom: '0.4rem' }}>Ereignis-Typen</div>
+          <div style={{ color: '#999', fontSize: '0.78rem', marginBottom: '0.4rem' }}>{t('settings.eventTypes')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {NOTIFY_TYPES.map(t => {
               const active = notifyConfig.types.includes(t.id);
@@ -287,7 +313,7 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
-          <div style={{ color: '#999', fontSize: '0.78rem', marginBottom: '0.4rem' }}>Ligen</div>
+          <div style={{ color: '#999', fontSize: '0.78rem', marginBottom: '0.4rem' }}>{t('settings.leagues')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             {NOTIFY_LEAGUES.map(l => {
               const active = notifyConfig.leagues.includes(l.id);
@@ -311,8 +337,8 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
           <input type='checkbox' checked={!!notifyConfig.onlyFavorites} style={{ accentColor: theme.primary }}
             onChange={e => setNotifyConfig({ ...notifyConfig, onlyFavorites: e.target.checked })} />
           <span>
-            Nur Favoriten-Vereine benachrichtigen&nbsp;
-            <span style={{ color: '#555' }}>({favorites.length} Favorit{favorites.length === 1 ? '' : 'en'} per ★ in der Spielübersicht markieren)</span>
+            {t('settings.notifyFavoritesOnly')}&nbsp;&nbsp;
+            <span style={{ color: '#555' }}>({favorites.length} ★)</span>
           </span>
         </label>
 
@@ -320,16 +346,16 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
           <input type='checkbox' checked={!!notifyConfig.weekly} style={{ accentColor: theme.primary }}
             onChange={e => setNotifyConfig({ ...notifyConfig, weekly: e.target.checked })} />
           <span>
-            📋 Wöchentliche Ergebnis-Zusammenfassung (montags, nur wenn Benachrichtigungen aktiv)<br />
-            <span style={{ color: '#555', fontSize: '0.75rem' }}>Ergebnisse der letzten 7 Tage der gewählten Ligen als Push.</span>
+            {t('settings.notifyWeekly')}<br />
+            <span style={{ color: '#555', fontSize: '0.75rem' }}>{t('settings.notifyWeeklyHint')}</span>
           </span>
         </label>
       </div>
 
       {/* Land für TV-Übertragung */}
       <div style={block}>
-        <h3 style={{ margin: '0 0 0.3rem 0' }}>🎥 TV-Übertragungsland</h3>
-        <span style={lbl}>Zeigt die TV-Sender deines Landes an (BroadcastBadge)</span>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>{t('settings.tvCountry')}</h3>
+        <span style={lbl}>{t('settings.tvCountryHint')}</span>
         <select value={country} onChange={e => setCountry(e.target.value)}
           style={{ background: '#111', color: '#fff', border: `1px solid ${theme.primary}44`, borderRadius: '8px', padding: '0.6rem 0.8rem', fontSize: '0.95rem', cursor: 'pointer', width: '100%' }}>
           {COUNTRIES.map(c => (
@@ -340,8 +366,8 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
 
       {/* Theme */}
       <div style={block}>
-        <h3 style={{ margin: '0 0 0.3rem 0' }}>🎨 Theme / Vereinsfarben</h3>
-        <span style={lbl}>Aktiv: <strong style={{ color: theme.primary }}>{theme.name}</strong></span>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>{t('settings.theme')}</h3>
+        <span style={lbl}>{t('settings.themeHint')} <strong style={{ color: theme.primary }}>{theme.name}</strong></span>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: '0.5rem' }}>
           {THEMES.map(t => (
             <button key={t.name} onClick={() => setTheme(t)} style={{
@@ -358,12 +384,12 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
 
       {/* Darstellung */}
       <div style={{ ...block, borderLeft: `4px solid ${theme.primary}` }}>
-        <h3 style={{ margin: '0 0 0.3rem 0' }}>🌗 Darstellung</h3>
-        <span style={lbl}>Heller Bereich, dunkle Akzente – oder klassisch dunkel. Standard folgt deiner System-Präferenz.</span>
+        <h3 style={{ margin: '0 0 0.3rem 0' }}>{t('settings.display')}</h3>
+        <span style={lbl}>{t('settings.displayHint')}</span>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {[
-            { id: 'light', label: '☀️ Hell', color: '#f8fafc' },
-            { id: 'dark',  label: '🌙 Dunkel', color: '#0f0f0f' },
+            { id: 'light', label: t('settings.light'), color: '#f8fafc' },
+            { id: 'dark',  label: t('settings.dark'), color: '#0f0f0f' },
           ].map(m => (
             <button key={m.id} onClick={() => setMode(m.id)} style={{
               background: mode === m.id ? theme.primary + '22' : '#222',
@@ -377,7 +403,7 @@ export default function Settings({ theme, setTheme, mode, setMode, fontSize, set
             background: '#222', color: '#aaa',
             border: '2px solid #2a2a2a', borderRadius: '8px', padding: '0.5rem 0.9rem',
             cursor: 'pointer', fontSize: '0.85rem',
-          }}>⚙️ System-Präferenz</button>
+          }}>{t('settings.systemPref')}</button>
         </div>
         <p style={{ color: '#555', fontSize: '0.75rem', margin: '0.6rem 0 0 0' }}>
           Gespeichert in <code style={{ color: '#888' }}>sn_mode</code>. Nutze im Hell-Modus ☀️ in der Navigation für einen schnellen Wechsel.

@@ -26,7 +26,7 @@ export function useAuth() {
       setToken(data.token);
       setEmail(data.user.email);
       applySettings(data.settings, setters);
-      return { ok: true, message: 'Eingeloggt! Einstellungen synchronisiert.' };
+      return { ok: true, messageKey: 'accounts.loggedIn' };
     } catch (e) {
       return { ok: false, message: e.message || 'Login fehlgeschlagen' };
     } finally {
@@ -41,7 +41,7 @@ export function useAuth() {
       setToken(data.token);
       setEmail(data.user.email);
       applySettings(data.settings, setters);
-      return { ok: true, message: 'Konto erstellt! Einstellungen synchronisiert.' };
+      return { ok: true, messageKey: 'accounts.registered' };
     } catch (e) {
       return { ok: false, message: e.message || 'Registrierung fehlgeschlagen' };
     } finally {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import useNotifications from '../hooks/useNotifications';
 import useWeeklySummary from '../hooks/useWeeklySummary';
 import { useNotifyConfig } from '../hooks/useNotifyConfig';
@@ -6,6 +7,7 @@ import { useToast } from './Toast';
 import { leagueSource } from '../leagues';
 
 export default function NotificationToggle({ theme, league }) {
+  const { t } = useTranslation();
   const [notifyConfig] = useNotifyConfig();
   const { permission, watching, toggle, sendNotification } = useNotifications(league, notifyConfig);
   const toast = useToast();
@@ -14,22 +16,22 @@ export default function NotificationToggle({ theme, league }) {
 
   const handleToggle = async () => {
     if (permission === 'denied') {
-      toast('Benachrichtigungen sind im Browser blockiert. Bitte in den Browser-Einstellungen freigeben.', 'error', 5000);
+      toast(t('notify.blocked'), 'error', 5000);
       return;
     }
     if (!watching && !(notifyConfig?.types?.length)) {
-      toast('Bitte zuerst in den Einstellungen einen Benachrichtigungstyp wählen (⚙️ → Benachrichtigungen).', 'info', 5000);
+      toast(t('notify.chooseType'), 'info', 5000);
       return;
     }
     const result = await toggle();
-    if (result) toast('🔔 Benachrichtigungen aktiviert!', 'success');
-    else toast('🔕 Benachrichtigungen deaktiviert.', 'info');
+    if (result) toast(t('notify.enabled'), 'success');
+    else toast(t('notify.disabled'), 'info');
   };
 
   if (typeof Notification === 'undefined' || leagueSource(league) !== 'openligadb') return null;
 
   return (
-    <button onClick={handleToggle} title={watching ? 'Benachrichtigungen deaktivieren' : 'Bei Toren benachrichtigen'} style={{
+    <button onClick={handleToggle} title={watching ? t('notify.disableTitle') : t('notify.enableTitle')} style={{
       background: watching ? theme.primary + '22' : 'transparent',
       color: watching ? theme.primary : '#555',
       border: `1px solid ${watching ? theme.primary : '#333'}`,

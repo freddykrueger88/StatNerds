@@ -1,7 +1,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+# --legacy-peer-deps: react-scripts@5 deklariert typescript nur optional,
+# das Projekt nutzt kein TS – npm 7+ blockiert sonst die Installation.
+RUN npm install --legacy-peer-deps
 COPY . .
 RUN npm run build
 
