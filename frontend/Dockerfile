@@ -15,8 +15,9 @@ EXPOSE 8080
 # Nicht als root laufen (DS-0002) – explizit für Trivy, Basis-Image ist bereits unprivileged
 USER nginx
 
-# Health-Check auf /api/health (DS-0026)
+# Health-Check auf /api/health (DS-0026) – 127.0.0.1 statt localhost,
+# da wget sonst den IPv6-::1-Pfad nimmt und nginx nur auf IPv4 lauscht.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -q -O /dev/null http://localhost:8080/ || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
