@@ -6,6 +6,7 @@ const pool    = require('./db');
 const startScheduler         = require('./scheduler');
 const { globalErrorHandler } = require('./middleware/errorHandler');
 const { apiLimiter }         = require('./middleware/rateLimiter');
+const { loadApiKey }         = require('./middleware/apikey');
 
 const VERSION = process.env.npm_package_version || '0.7.0';
 const PORT    = process.env.PORT || 8000;
@@ -13,20 +14,27 @@ const PORT    = process.env.PORT || 8000;
 const app = express();
 
 // ── CORS ───────────────────────────────────────────────────────────────
+// Öffentliche API (Issue #19): ohne ALLOWED_ORIGINS sind alle Origins
+// erlaubt. Mit gesetzter Liste wird streng gefiltert (App-Betrieb).
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000'];
+  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : null;
 
-app.use(cors({
+app.use(cors(allowedOrigins ? {
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) callback(null, true);
     else callback(new Error(`CORS: Origin ${origin} nicht erlaubt.`));
   },
   methods: ['GET', 'POST', 'DELETE'],
   allowedHeaders: ['Content-Type', 'x-api-key'],
+} : {
+  methods: ['GET', 'POST', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'x-api-key'],
 }));
 
 app.use(express.json());
+// API-Key (x-api-key) früh laden → Rate-Limiter kann Key-basiertes Budget nutzen
+app.use(loadApiKey);
 app.use(apiLimiter);
 
 // ── Health (inkl. DB-Ping) ──────────────────────────────────────────────
@@ -61,6 +69,8 @@ app.use('/api/prediction',  require('./routes/prediction'));
 app.use('/api/apifootball', require('./routes/apifootball'));
 app.use('/api/weekly',     require('./routes/weekly'));
 app.use('/api/auth',       require('./routes/auth'));
+app.use('/api/apikeys',    require('./routes/apikeys'));
+app.use('/api',            require('./routes/docs'));
 app.use('/api/broadcast',   require('./routes/broadcast').router);
 app.use('/api/referee',     require('./routes/referee'));
 app.use('/api/stats',       require('./routes/stats'));
@@ -71,6 +81,6 @@ app.use(globalErrorHandler);
 // ── Start ─────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n📊 StatNerds Backend v${VERSION} → http://localhost:${PORT}`);
-  console.log(`🔒 CORS: ${allowedOrigins.join(', ')}`);
+  console.log(`🔒 CORS: ${allowedOrigins ? allowedOrigins.join(', ') : 'alle Origins (öffentliche API)'}`);
   startScheduler(cache);
 });

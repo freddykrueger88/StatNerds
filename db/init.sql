@@ -92,6 +92,15 @@ CREATE TABLE IF NOT EXISTS user_settings (
   PRIMARY KEY (user_id, key)
 );
 
+-- Öffentliche REST-API: Schlüssel für Dritte (Issue #19)
+CREATE TABLE IF NOT EXISTS api_keys (
+  id SERIAL PRIMARY KEY,
+  api_key VARCHAR(64) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  enabled BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Standarddaten
 INSERT INTO sports (name) VALUES ('Fussball'), ('Basketball'), ('Tennis')
   ON CONFLICT (name) DO NOTHING;
